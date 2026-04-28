@@ -192,7 +192,7 @@ body{
 <body>
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v5.3</span>
+  <span class="badge">v5.5</span>
   <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
@@ -627,56 +627,179 @@ const STRIP_CSS = [
 ];
 
 /**
+ * Split comma-separated selectors like "h1, h2, h3" into individual selectors.
+ * Respects :not(a, b) and [attr~=val] so commas inside parens/brackets are ignored.
+ */
+function splitSelectors(sel) {
+  const parts = [];
+  let cur = '', depth = 0, inAttr = 0;
+  for (const ch of sel) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    else if (ch === '[') inAttr++;
+    else if (ch === ']') inAttr--;
+    else if (ch === ',' && depth === 0 && inAttr === 0) {
+      const t = cur.trim();
+      if (t) parts.push(t);
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  const t = cur.trim();
+  if (t) parts.push(t);
+  return parts;
+}
+
+/**
+ * Strip pseudo-classes/-elements from a selector so matching works on real attributes only.
+ * ::before → ''; :hover → ''; :nth-child(2n) → ''
+ */
+function stripPseudo(sel) {
+  return sel.replace(/::?[\w-]+(\([^)]*\))?/g, '').trim();
+}
+
+/**
+ * Check if an element matches an attribute selector fragment like "[disabled]" or "[attr~=val]".
+ */
+function matchAttr(el, attrExpr) {
+  const m = attrExpr.match(/^\[([\w-]+)([*^$|~]?)=([^\]]+)\]$/);
+  if (!m) {
+    // bare [attr]
+    const bare = attrExpr.match(/^\[([\w-]+)\]$/);
+    return bare && el.hasAttribute(bare[1]);
+  }
+  const [, name, op, rawVal] = m;
+  const val = rawVal.replace(/^["']|["']$/g, '');
+  const actual = el.getAttribute(name);
+  if (actual == null) return false;
+  switch (op) {
+    case '':  return actual === val;         // [attr=val]
+    case '~': return actual.split(/\s+/).includes(val); // [attr~=val]
+    case '|': return actual === val || actual.startsWith(val + '-'); // [attr|=val]
+    case '^': return actual.startsWith(val);  // [attr^=val]
+    case '$': return actual.endsWith(val);    // [attr$=val]
+    case '*': return actual.includes(val);    // [attr*=val]
+    default:  return false;
+  }
+}
+
+/**
  * Parse a <style> block into a list of {selector, declarations} rules.
+ * Uses a state-machine to correctly handle nested braces, @media, @keyframes etc.
  */
 function parseCSSRules(cssText) {
   const rules = [];
-  // Remove comments
+  // 1. Remove comments
   cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
-  // Extract each rule: selector { declarations }
-  const matches = cssText.match(/([^{]+)\{([^}]+)\}/g);
-  if (!matches) return rules;
-  matches.forEach(m => {
-    const parts = m.match(/([^{]+)\{([^}]+)\}/);
-    if (!parts) return;
-    const selector = parts[1].trim();
-    const decls = parts[2].trim();
-    if (selector && decls) rules.push({ selector, declarations: decls });
-  });
+  // 2. Remove @import / @charset single-line statements
+  cssText = cssText.replace(/@(import|charset)\b[^;]+;/gi, '');
+
+  // 3. State-machine: track brace depth
+  let i = 0, cur = '', depth = 0, inMedia = false, skipBlock = false;
+  const flushRule = () => {
+    const braceIdx = cur.indexOf('{');
+    if (braceIdx < 0) return;
+    const selector = cur.slice(0, braceIdx).trim();
+    const decls = cur.slice(braceIdx + 1).trim();
+    if (!selector || !decls) return;
+    // Split comma-separated selectors
+    splitSelectors(selector).forEach(sel => {
+      rules.push({ selector: sel, declarations: decls });
+    });
+  };
+
+  while (i < cssText.length) {
+    const ch = cssText[i];
+    if (ch === '{') {
+      if (depth === 0) {
+        const before = cur.trim();
+        if (/^@media\b/i.test(before)) { inMedia = true; cur += ch; depth++; }
+        else if (before.startsWith('@')) { skipBlock = true; cur = ''; depth++; }
+        else { cur += ch; depth++; }
+      } else { cur += ch; depth++; }
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        if (inMedia) { inMedia = false; /* rules inside @media already parsed */ }
+        else if (!skipBlock) flushRule();
+        skipBlock = false;
+        cur = '';
+      } else { cur += ch; }
+    } else { cur += ch; }
+    i++;
+  }
+  // Flush any remaining rule (unclosed brace)
+  if (cur.trim() && !skipBlock && !inMedia) flushRule();
   return rules;
 }
 
 /**
- * Check if element matches a simple CSS selector.
- * Supports: tag, .class, #id, tag.class, tag#id, .class1.class2, parent child
+ * Check if element matches a CSS selector.
+ * Supports: tag, .class, #id, [attr], [attr=val], *,
+ *           tag.class, .class1.class2, parent child, parent > child
+ * Pseudo-classes/pseudo-elements are stripped automatically.
  */
 function matchSel(el, selector) {
   if (!el || el.nodeType !== 1) return false;
-  const tag = el.tagName.toLowerCase();
-  const id = el.id || '';
-  const classes = Array.from(el.classList);
 
-  // Descendant: "parent child"
-  if (selector.includes(' ')) {
-    const parts = selector.split(/\s+/).filter(Boolean);
+  // Strip pseudo-classes/-elements
+  const clean = stripPseudo(selector);
+  if (!clean) return false;
+
+  // Parse attribute selectors out of the selector string
+  const attrParts = [];
+  const attrRe = /\[([\w-]+)([*^$|~]?)=?([^\]]*)\]/g;
+  let attrMatch;
+  while ((attrMatch = attrRe.exec(clean)) !== null) {
+    attrParts.push(attrMatch[0]);
+  }
+  // Remove attribute fragments from the selector for tag/class/id matching
+  let selCore = clean.replace(/\[[\w-]+([*^$|~]?=([^\]]*))?\]/g, '').trim();
+
+  // Direct child combinator: "parent > child"
+  if (selCore.includes('>')) {
+    const parts = selCore.split(/\s*>\s*/).filter(Boolean);
     const childSel = parts.pop();
-    if (!simpleMatch(el, childSel)) return false;
+    if (!simpleMatch(el, childSel, attrParts)) return false;
     let p = el.parentElement;
-    const parentSel = parts.join(' ');
+    const parentSel = parts.join(' > ');
     while (p) {
-      if (simpleMatch(p, parentSel)) return true;
+      if (simpleMatch(p, parentSel, [])) return true;
       p = p.parentElement;
     }
     return false;
   }
-  return simpleMatch(el, selector);
+
+  // Descendant combinator: "parent child"
+  if (selCore.includes(' ')) {
+    const parts = selCore.split(/\s+/).filter(Boolean);
+    const childSel = parts.pop();
+    if (!simpleMatch(el, childSel, attrParts)) return false;
+    let p = el.parentElement;
+    const parentSel = parts.join(' ');
+    while (p) {
+      if (simpleMatch(p, parentSel, [])) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+
+  return simpleMatch(el, selCore, attrParts);
 }
 
-function simpleMatch(el, sel) {
+function simpleMatch(el, sel, attrParts) {
   if (!el || el.nodeType !== 1) return false;
   const tag = el.tagName.toLowerCase();
   const id = el.id || '';
   const cls = Array.from(el.classList);
+
+  // Universal selector: if sel is '*' or empty after stripping, match any tag
+  if (sel === '*' || sel === '') {
+    // Still need to check attribute selectors
+    if (attrParts.length) return attrParts.every(a => matchAttr(el, a));
+    return true;
+  }
 
   const classParts = sel.match(/\.([\w-]+)/g);
   const idPart = sel.match(/#([\w-]+)/);
@@ -688,7 +811,11 @@ function simpleMatch(el, sel) {
     const needed = classParts.map(c => c.slice(1));
     if (!needed.every(c => cls.includes(c))) return false;
   }
-  if (!tagPart && !idPart && !classParts) return false;
+  if (!tagPart && !idPart && !classParts && !attrParts.length) return false;
+
+  // Check attribute selectors
+  if (attrParts.length && !attrParts.every(a => matchAttr(el, a))) return false;
+
   return true;
 }
 
