@@ -192,7 +192,7 @@ body{
 <body>
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v5.5</span>
+  <span class="badge">v5.6</span>
   <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
@@ -595,11 +595,16 @@ const DEFAULTS = {
   hr:    'margin:1.2em 0;border:none;border-top:1px solid #eee',
 };
 
-/** Tags to remove entirely (replace with text) */
+/** Tags to remove entirely (strip from output) */
 const REMOVE = new Set([
   'script','iframe','video','audio','embed','object',
   'canvas','svg','form','input','select','textarea','button',
-  'nav','aside','footer','header','link','meta','noscript',
+  'link','meta','noscript',
+]);
+
+/** Semantic tags to convert to div (preserve children, lose semantic meaning) */
+const SEMANTIC_TO_DIV = new Set([
+  'nav','aside','footer','header','main','section','article','figure','figcaption',
 ]);
 
 /** Attributes to preserve */
@@ -618,12 +623,17 @@ const STRIP_CSS = [
   'justify-content','align-items','align-content','align-self','order',
   // Grid — unsupported
   'grid','grid-template','grid-column','grid-row','grid-area','gap',
+  // CSS Columns — unsupported
+  'column-count','column-width','column-gap','column-rule','column-span',
   // Animation / transition — unsupported
   'transform','transition','animation','animation-','keyframes',
   // Visual effects — mostly unsupported
-  'clip','filter','backdrop-filter',
+  'clip','filter','backdrop-filter','box-shadow','text-shadow',
+  'perspective','backface-visibility','mask','-webkit-mask',
   // Interaction — stripped by WeChat
   'cursor','user-select','pointer-events','resize','outline',
+  // Webkit line-clamp — not supported
+  '-webkit-line-clamp','-webkit-box-orient',
 ];
 
 /**
@@ -721,8 +731,15 @@ function parseCSSRules(cssText) {
     } else if (ch === '}') {
       depth--;
       if (depth === 0) {
-        if (inMedia) { inMedia = false; /* rules inside @media already parsed */ }
-        else if (!skipBlock) flushRule();
+        if (inMedia) {
+          inMedia = false;
+          // Extract rules from inside @media and parse recursively
+          const braceIdx = cur.indexOf('{');
+          if (braceIdx > 0) {
+            const inner = cur.slice(braceIdx + 1).replace(/\}\s*$/, '').trim();
+            if (inner) parseCSSRules(inner).forEach(r => rules.push(r));
+          }
+        } else if (!skipBlock) flushRule();
         skipBlock = false;
         cur = '';
       } else { cur += ch; }
@@ -743,9 +760,26 @@ function parseCSSRules(cssText) {
 function matchSel(el, selector) {
   if (!el || el.nodeType !== 1) return false;
 
-  // Strip pseudo-classes/-elements
-  const clean = stripPseudo(selector);
-  if (!clean) return false;
+  // Extract :not() pseudo-classes before stripping
+  const notSelectors = [];
+  let withoutNot = selector.replace(/:not\s*\(\s*([^)]+?)\s*\)/g, (_, inner) => {
+    splitSelectors(inner).forEach(s => { const t = s.trim(); if (t) notSelectors.push(t); });
+    return '';
+  });
+
+  // Strip remaining pseudo-classes/-elements
+  const clean = stripPseudo(withoutNot);
+  if (!clean && notSelectors.length === 0) return false;
+
+  // Check :not() — element must NOT match any negated selector
+  if (notSelectors.length > 0) {
+    for (const ns of notSelectors) {
+      if (matchSel(el, ns)) return false;
+    }
+  }
+
+  // If only :not() was specified (e.g. ":not(p)"), match all other elements
+  if (!clean) return true;
 
   // Parse attribute selectors out of the selector string
   const attrParts = [];
@@ -769,6 +803,34 @@ function matchSel(el, selector) {
       p = p.parentElement;
     }
     return false;
+  }
+
+  // Adjacent sibling combinator: "prev + next"
+  if (selCore.includes('+') && !selCore.includes('+=')) {
+    const parts = selCore.split(/\s*\+\s*/).filter(Boolean);
+    if (parts.length >= 2) {
+      const siblingSel = parts.pop();
+      if (!simpleMatch(el, siblingSel, attrParts)) return false;
+      let prev = el.previousElementSibling;
+      const prevSel = parts.join(' + ');
+      return prev && simpleMatch(prev, prevSel, []);
+    }
+  }
+
+  // General sibling combinator: "prev ~ next"
+  if (selCore.includes('~') && !selCore.includes('~=')) {
+    const parts = selCore.split(/\s*~\s*/).filter(Boolean);
+    if (parts.length >= 2) {
+      const siblingSel = parts.pop();
+      if (!simpleMatch(el, siblingSel, attrParts)) return false;
+      let prev = el.previousElementSibling;
+      const prevSel = parts.join(' ~ ');
+      while (prev) {
+        if (simpleMatch(prev, prevSel, [])) return true;
+        prev = prev.previousElementSibling;
+      }
+      return false;
+    }
   }
 
   // Descendant combinator: "parent child"
@@ -833,10 +895,16 @@ function convertHTML(html) {
     el.remove();
   });
 
-  // ---- Step 2: Remove unsupported tags (replace with text) ----
+  // ---- Step 2: Remove unsupported tags / convert semantic tags to div ----
   doc.querySelectorAll(Array.from(REMOVE).join(',')).forEach(el => {
     const txt = document.createTextNode(el.textContent || '');
     el.parentNode.replaceChild(txt, el);
+  });
+  doc.querySelectorAll(Array.from(SEMANTIC_TO_DIV).join(',')).forEach(el => {
+    const div = doc.createElement('div');
+    Array.from(el.attributes).forEach(attr => div.setAttribute(attr.name, attr.value));
+    while (el.firstChild) div.appendChild(el.firstChild);
+    el.parentNode.replaceChild(div, el);
   });
 
   // ---- Step 3: Walk DOM — apply CSS rules, strip bad attrs, add defaults ----
@@ -860,9 +928,17 @@ function convertHTML(html) {
       el.setAttribute('style', DEFAULTS[tag]);
     }
 
-    // 3c. Strip CSS properties WeChat can't render
+    // 3b-extra. WeChat-specific attribute fixes
+    if (tag === 'table') {
+      if (!el.hasAttribute('border')) el.setAttribute('border', '0');
+      if (!el.hasAttribute('cellspacing')) el.setAttribute('cellspacing', '0');
+      if (!el.hasAttribute('cellpadding')) el.setAttribute('cellpadding', '0');
+    }
+    if (tag === 'img' && !el.hasAttribute('alt')) el.setAttribute('alt', '');
+
+    // 3c. Strip CSS properties WeChat can't render & fix values
     const st = el.getAttribute('style');
-    if (st) el.setAttribute('style', stripBadCSS(st));
+    if (st) el.setAttribute('style', fixWechatCSS(stripBadCSS(st)));
 
     // 3d. Strip non-allowed attributes (but keep class/id for now — needed for CSS matching above)
     Array.from(el.attributes).forEach(attr => {
@@ -942,6 +1018,67 @@ function stripBadCSS(css) {
       }
       return true;
     })
+    .join('; ');
+}
+
+/**
+ * Fix CSS values that WeChat cannot render:
+ * - display:flex/grid → block (WeChat strips flex/grid layout)
+ * - background with gradients → solid color fallback
+ */
+function fixWechatCSS(css) {
+  if (!css) return '';
+  return css.split(';')
+    .map(d => {
+      d = d.trim();
+      if (!d) return '';
+      const ci = d.indexOf(':');
+      if (ci <= 0) return d;
+      const prop = d.slice(0, ci).trim().toLowerCase();
+      let val = d.slice(ci + 1).trim();
+
+      // Convert flex/grid display to block
+      if (prop === 'display') {
+        const v = val.toLowerCase();
+        if (v === 'flex' || v === 'grid' || v === 'inline-flex' || v === 'inline-grid') {
+          val = v.includes('inline') ? 'inline-block' : 'block';
+        }
+      }
+
+      // Replace gradient backgrounds with solid color fallback
+      if (prop === 'background' || prop === 'background-image') {
+        const gradMatch = val.match(/(?:linear|radial|conic)-gradient\s*\(/i);
+        if (gradMatch) {
+          // Extract first color stop from gradient arguments
+          const inner = val.slice(gradMatch.index + gradMatch[0].length);
+          let parenDepth = 1, j = 0;
+          while (j < inner.length && parenDepth > 0) {
+            if (inner[j] === '(') parenDepth++;
+            else if (inner[j] === ')') parenDepth--;
+            j++;
+          }
+          const args = inner.slice(0, j - 1);
+          // Find first color-like token in the arguments
+          const tokens = args.split(',');
+          let fallback = '';
+          for (const t of tokens) {
+            const s = t.trim();
+            const firstWord = s.split(/\s+/)[0];
+            if (/^(#(?:[0-9a-f]{3,8})|rgb|hsl|[\w-]+)$/i.test(firstWord) && !/^(to|from|at|deg)$/i.test(firstWord) && !/^\d/.test(firstWord)) {
+              fallback = firstWord; break;
+            }
+          }
+          if (fallback) {
+            val = fallback;
+            // background-image cannot accept color value, switch to background
+            if (prop === 'background-image') return 'background:' + val;
+          }
+        }
+      }
+
+      return prop + ':' + val;
+    })
+    .filter(Boolean)
     .join('; ');
 }
 
@@ -1078,6 +1215,8 @@ function renderImages() {
           // Update preview
           const imgs = preview.querySelectorAll('img');
           if (imgs[i]) imgs[i].setAttribute('src', dataUrl);
+          const rawBytes = Math.round(dataUrl.length * 3 / 4);
+          const dataKB = rawBytes > 1024 ? (rawBytes / 1024).toFixed(1) : rawBytes / 1024;
           toast(`✅ 已嵌入 ${file.name} (原${fileMB.toFixed(1)}MB → base64 ${dataKB}KB)`);
           renderImages();
         };
@@ -1294,23 +1433,35 @@ htmlInput.addEventListener('keydown', e => {
 
 let acTimer;
 htmlInput.addEventListener('input', () => {
+  if (pasting) return; // paste handler already calls convert()
   clearTimeout(acTimer);
   acTimer = setTimeout(convert, 1200);
 });
 
 /* ========== Paste rich text handler ========== */
+let pasting = false;
 htmlInput.addEventListener('paste', () => {
+  // Wait for the plain text to be inserted first
   setTimeout(() => {
     const text = htmlInput.value;
-    if (!text || /<[a-z][\s\S]*>/i.test(text.slice(0,200))) return;
+    // If already has HTML tags or is empty, skip clipboard read
+    if (!text || /<[a-z][\s\S]*>/i.test(text)) return;
+
     navigator.clipboard.read().then(items => {
       for (const item of items) {
         if (item.types.includes('text/html')) {
           item.getType('text/html').then(blob => blob.text().then(rich => {
-            if (rich && rich.length > text.length) {
-              htmlInput.value = rich;
-              convert();
-            }
+            if (!rich || rich.length <= text.length) return;
+            // Clean up full HTML wrappers from clipboard
+            let clean = rich;
+            // Remove <html>, <head>, <body> wrappers but keep content
+            clean = clean.replace(/<\/?(?:html|head|body|!DOCTYPE)[^>]*>/gi, '');
+            // Remove <meta>, <title>, <link> and other head-only tags
+            clean = clean.replace(/<(?:meta|title|link|style|base)[^>]*\/?>/gi, '');
+            if (clean !== rich) { pasting = true; }
+            htmlInput.value = clean.trim() || rich;
+            convert();
+            setTimeout(() => { pasting = false; }, 100);
           }));
           break;
         }
