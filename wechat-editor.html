@@ -187,7 +187,7 @@ body{
 <body>
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v4.1</span>
+  <span class="badge">v5.0</span>
   <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
@@ -489,39 +489,18 @@ modal.addEventListener('click', e => { if(e.target===modal) closeModal(); });
 modalInput.addEventListener('keydown', e => { if(e.key==='Enter') $('#modalConfirm').click(); if(e.key==='Escape') closeModal(); });
 
 /* =====================================================================
-   CORE CONVERSION ENGINE (rewritten v4)
+   CORE CONVERSION ENGINE v5
+   - Preserve ALL inline styles (no whitelist filtering)
+   - Convert <style> blocks to inline styles (CSS → inline)
+   - Keep class/id during processing, strip from final output
+   - Default styles only applied when element has NO style at all
    ===================================================================== */
 
 /**
- * Allowed CSS properties (WeChat-compatible subset)
+ * Minimal default styles for WeChat-rendered elements.
+ * Only applied when element has zero inline styling.
  */
-const ALLOWED_CSS = new Set([
-  'color','background','background-color','background-image',
-  'font-size','font-weight','font-style','font-family',
-  'text-align','text-decoration','text-indent',
-  'line-height','letter-spacing',
-  'margin','margin-top','margin-right','margin-bottom','margin-left',
-  'padding','padding-top','padding-right','padding-bottom','padding-left',
-  'border','border-top','border-right','border-bottom','border-left',
-  'border-color','border-style','border-width','border-collapse','border-radius',
-  'width','height','max-width','max-height',
-  'display','vertical-align','white-space',
-  'list-style','list-style-type','overflow',
-]);
-
-function cleanCSS(css) {
-  if (!css) return '';
-  return css.split(';').map(s => s.trim()).filter(s => {
-    const ci = s.indexOf(':');
-    if (ci < 0) return false;
-    return ALLOWED_CSS.has(s.slice(0, ci).trim());
-  }).join('; ');
-}
-
-/**
- * Inline styles that WeChat articles commonly support
- */
-const DEFAULT_STYLES = {
+const DEFAULTS = {
   table: 'width:100%;border-collapse:collapse;margin:.8em 0',
   th:    'border:1px solid #ddd;padding:6px 10px;background:#f7f7f7;font-weight:600',
   td:    'border:1px solid #ddd;padding:6px 10px',
@@ -531,96 +510,163 @@ const DEFAULT_STYLES = {
   hr:    'margin:1.2em 0;border:none;border-top:1px solid #eee',
 };
 
-function hasStyle(attr) {
-  return attr && /style/i.test(attr);
-}
-
-/**
- * Ensure an element has a minium set of styles.
- * Merges with any existing inline style (existing wins on conflict).
- */
-function ensureStyle(el, defaultCss) {
-  const existing = el.getAttribute('style') || '';
-  if (!existing && !defaultCss) return;
-  if (!existing) {
-    el.setAttribute('style', defaultCss);
-    return;
-  }
-  // Merge: existing properties keep their values, missing ones get defaults
-  const merged = {};
-  defaultCss.split(';').forEach(d => {
-    const ci = d.indexOf(':');
-    if (ci > 0) merged[d.slice(0,ci).trim()] = d.slice(ci+1).trim();
-  });
-  existing.split(';').forEach(d => {
-    const ci = d.indexOf(':');
-    if (ci > 0) merged[d.slice(0,ci).trim()] = d.slice(ci+1).trim();
-  });
-  const out = Object.entries(merged).map(([k,v]) => `${k}:${v}`).join(';');
-  el.setAttribute('style', out);
-}
-
-/**
- * Elements NOT supported by WeChat – will be replaced with their text content
- */
-const REMOVE_TAGS = new Set([
+/** Tags to remove entirely (replace with text) */
+const REMOVE = new Set([
   'script','iframe','video','audio','embed','object',
   'canvas','svg','form','input','select','textarea','button',
-  'nav','aside','footer','header','link','meta','noscript','style',
+  'nav','aside','footer','header','link','meta','noscript',
 ]);
 
-/**
- * Attributes preserved during conversion
- */
-const KEEP_ATTRS = new Set([
+/** Attributes to preserve */
+const KEEP = new Set([
   'style','href','src','alt','title','target',
   'width','height','colspan','rowspan','align','valign',
   'border','cellpadding','cellspacing','bgcolor',
 ]);
 
+/** Properties that WeChat definitely CANNOT render — strip these */
+const STRIP_CSS = new Set([
+  'position','top','right','bottom','left','z-index','float','clear',
+  'flex','flex-direction','flex-wrap','flex-flow','flex-grow','flex-shrink','flex-basis',
+  'justify-content','align-items','align-content','align-self','order',
+  'grid','grid-template','grid-column','grid-row','grid-area','gap',
+  'transform','transition','animation','keyframes',
+  'box-shadow','text-shadow','opacity',
+  'overflow','overflow-x','overflow-y','clip','filter','backdrop-filter',
+  'cursor','user-select','pointer-events','resize','outline',
+  '-webkit-','-moz-','-ms-','-o-',
+]);
+
 /**
- * Main conversion: raw HTML → WeChat-compatible HTML
+ * Parse a <style> block into a list of {selector, declarations} rules.
+ */
+function parseCSSRules(cssText) {
+  const rules = [];
+  // Remove comments
+  cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Extract each rule: selector { declarations }
+  const matches = cssText.match(/([^{]+)\{([^}]+)\}/g);
+  if (!matches) return rules;
+  matches.forEach(m => {
+    const parts = m.match(/([^{]+)\{([^}]+)\}/);
+    if (!parts) return;
+    const selector = parts[1].trim();
+    const decls = parts[2].trim();
+    if (selector && decls) rules.push({ selector, declarations: decls });
+  });
+  return rules;
+}
+
+/**
+ * Check if element matches a simple CSS selector.
+ * Supports: tag, .class, #id, tag.class, tag#id, .class1.class2, parent child
+ */
+function matchSel(el, selector) {
+  if (!el || el.nodeType !== 1) return false;
+  const tag = el.tagName.toLowerCase();
+  const id = el.id || '';
+  const classes = Array.from(el.classList);
+
+  // Descendant: "parent child"
+  if (selector.includes(' ')) {
+    const parts = selector.split(/\s+/).filter(Boolean);
+    const childSel = parts.pop();
+    if (!simpleMatch(el, childSel)) return false;
+    let p = el.parentElement;
+    const parentSel = parts.join(' ');
+    while (p) {
+      if (simpleMatch(p, parentSel)) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+  return simpleMatch(el, selector);
+}
+
+function simpleMatch(el, sel) {
+  if (!el || el.nodeType !== 1) return false;
+  const tag = el.tagName.toLowerCase();
+  const id = el.id || '';
+  const cls = Array.from(el.classList);
+
+  const classParts = sel.match(/\.([\w-]+)/g);
+  const idPart = sel.match(/#([\w-]+)/);
+  const tagPart = sel.match(/^([\w-]+)/);
+
+  if (tagPart && tagPart[1].toLowerCase() !== tag) return false;
+  if (idPart && idPart[1] !== id) return false;
+  if (classParts) {
+    const needed = classParts.map(c => c.slice(1));
+    if (!needed.every(c => cls.includes(c))) return false;
+  }
+  if (!tagPart && !idPart && !classParts) return false;
+  return true;
+}
+
+/**
+ * Main conversion: raw HTML → WeChat-compatible HTML with preserved styles
  */
 function convertHTML(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const body = doc.body || doc.documentElement;
 
-  // --- Step 1: Remove unsupported tags (replace with text) ---
-  const removeSel = Array.from(REMOVE_TAGS).join(',');
-  doc.querySelectorAll(removeSel).forEach(el => {
+  // ---- Step 1: Extract & parse <style> blocks, then remove them ----
+  const cssRules = [];
+  doc.querySelectorAll('style').forEach(el => {
+    parseCSSRules(el.textContent).forEach(r => cssRules.push(r));
+    el.remove();
+  });
+
+  // ---- Step 2: Remove unsupported tags (replace with text) ----
+  doc.querySelectorAll(Array.from(REMOVE).join(',')).forEach(el => {
     const txt = document.createTextNode(el.textContent || '');
     el.parentNode.replaceChild(txt, el);
   });
 
-  // --- Step 2: Process all elements ---
+  // ---- Step 3: Walk DOM — apply CSS rules, strip bad attrs, add defaults ----
   function walk(el) {
     if (el.nodeType !== 1) return;
     const tag = el.tagName.toLowerCase();
 
-    // Strip non-allowed attributes
-    Array.from(el.attributes).forEach(attr => {
-      const n = attr.name.toLowerCase();
-      if (n==='style' || n==='class' || n==='id') return;
-      if (!KEEP_ATTRS.has(n)) el.removeAttribute(n);
-    });
-    el.removeAttribute('class');
-    el.removeAttribute('id');
-
-    // Ensure default styles for known elements
-    if (DEFAULT_STYLES[tag]) {
-      ensureStyle(el, DEFAULT_STYLES[tag]);
+    // 3a. Find matching CSS rules and merge into inline style
+    const matched = cssRules.filter(r => matchSel(el, r.selector));
+    if (matched.length > 0) {
+      let merged = el.getAttribute('style') || '';
+      matched.forEach(r => {
+        merged = mergeCSS(merged, r.declarations);
+      });
+      el.setAttribute('style', merged);
     }
 
-    // Clean up existing style
+    // 3b. Add default style ONLY if element has NO style at all
+    const currentStyle = el.getAttribute('style') || '';
+    if (!currentStyle.trim() && DEFAULTS[tag]) {
+      el.setAttribute('style', DEFAULTS[tag]);
+    }
+
+    // 3c. Strip CSS properties WeChat can't render
     const st = el.getAttribute('style');
-    if (st) el.setAttribute('style', cleanCSS(st));
+    if (st) el.setAttribute('style', stripBadCSS(st));
+
+    // 3d. Strip non-allowed attributes (but keep class/id for now — needed for CSS matching above)
+    Array.from(el.attributes).forEach(attr => {
+      const n = attr.name.toLowerCase();
+      if (n === 'style' || n === 'class' || n === 'id') return;
+      if (!KEEP.has(n)) el.removeAttribute(n);
+    });
 
     // Recurse children
     Array.from(el.children).forEach(walk);
   }
   Array.from(body.children).forEach(walk);
 
-  // --- Step 3: Extract image info ---
+  // ---- Step 4: Clean class/id from output (not needed in WeChat) ----
+  doc.querySelectorAll('[class],[id]').forEach(el => {
+    el.removeAttribute('class');
+    el.removeAttribute('id');
+  });
+
+  // ---- Step 5: Extract image info ----
   const images = [];
   doc.querySelectorAll('img').forEach(img => {
     const src = img.getAttribute('src') || '';
@@ -634,16 +680,14 @@ function convertHTML(html) {
     });
   });
 
-  // --- Step 4: Serialize ---
+  // ---- Step 6: Serialize ----
   let out = body.innerHTML;
-
-  // Clean wrapper tags (shouldn't be needed but just in case)
   out = out.replace(/<\/?body[^>]*>/gi,'');
   out = out.replace(/<\/?html[^>]*>/gi,'');
   out = out.replace(/<\/?head[^>]*>/gi,'');
   out = out.replace(/<!\[CDATA\[/g,'').replace(/\]\]>/g,'');
 
-  // --- Step 5: Stats ---
+  // ---- Stats ----
   const textContent = body.textContent || '';
   const charCount = textContent.replace(/\s/g,'').length;
   const pCount = (out.match(/<p[ >]/gi)||[]).length;
@@ -651,6 +695,35 @@ function convertHTML(html) {
   const readTime = Math.max(1, Math.round(charCount/300));
 
   return { html: out, images, stats: { chars: charCount, paragraphs: pCount, images: imgCount, readTime } };
+}
+
+/** Merge two CSS declaration strings (second overrides first on conflict) */
+function mergeCSS(a, b) {
+  if (!b && !a) return '';
+  if (!b) return a || '';
+  if (!a) return b;
+  const map = {};
+  (a+';'+b).split(';').forEach(d => {
+    const ci = d.indexOf(':');
+    if (ci > 0) map[d.slice(0,ci).trim()] = d.slice(ci+1).trim();
+  });
+  return Object.entries(map).map(([k,v]) => `${k}:${v}`).join('; ');
+}
+
+/** Strip CSS properties that WeChat can't handle */
+function stripBadCSS(css) {
+  if (!css) return '';
+  return css.split(';')
+    .map(d => d.trim()).filter(d => {
+      if (!d) return false;
+      const prop = d.split(':')[0].trim().toLowerCase();
+      // Check prefix blacklist
+      for (const bad of STRIP_CSS) {
+        if (prop === bad || prop.startsWith(bad)) return false;
+      }
+      return true;
+    })
+    .join('; ');
 }
 
 /* ========== Image Manager with Upload ========== */
