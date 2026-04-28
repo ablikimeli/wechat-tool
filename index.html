@@ -139,12 +139,16 @@ body{
 #preview img{max-width:100%;height:auto;display:block;margin:.8em auto;border-radius:4px}
 #preview a{color:#07c160;text-decoration:underline}
 #preview hr{margin:1.2em 0;border:none;border-top:1px solid #eee}
-#preview code{background:#f5f5f5;padding:1px 5px;border-radius:3px;font-size:13px;font-family:Consolas,monospace}
 #preview pre{
-  background:#2d2d2d;color:#f8f8f2;padding:12px 14px;border-radius:6px;
-  overflow-x:auto;margin:.8em 0;font-size:13px;line-height:1.5;
+  background:#1e1e1e;color:#d4d4d4;padding:14px 16px;border-radius:8px;
+  overflow-x:auto;margin:.8em 0;font-size:13px;line-height:1.6;
+  font-family:Consolas,"Courier New",monospace;white-space:pre;
 }
 #preview pre code{background:none;padding:0;color:inherit;font-size:inherit}
+#preview code{
+  background:#f0f0f0;color:#e74c3c;padding:2px 6px;border-radius:3px;
+  font-family:Consolas,"Courier New",monospace;font-size:13px;
+}
 
 .debug-panel{display:none;border-top:2px solid #e74c3c;background:#1e1e1e;color:#d4d4d4;padding:10px 14px;font-size:12px;font-family:Consolas,monospace;max-height:200px;overflow:auto}
 .debug-panel.open{display:block}
@@ -187,7 +191,7 @@ body{
 <body>
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v5.1</span>
+  <span class="badge">v5.2</span>
   <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
@@ -584,7 +588,8 @@ const DEFAULTS = {
   th:    'border:1px solid #ddd;padding:6px 10px;background:#f7f7f7;font-weight:600',
   td:    'border:1px solid #ddd;padding:6px 10px',
   blockquote: 'margin:.8em 0;padding:8px 14px;background:#f7f7f7;border-left:4px solid #07c160;color:#666',
-  pre:   'background:#2d2d2d;color:#f8f8f2;padding:12px 14px;border-radius:6px;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.5',
+  pre:   'background:#1e1e1e;color:#d4d4d4;padding:14px 16px;border-radius:8px;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace',
+  code:  'background:#f0f0f0;color:#e74c3c;padding:2px 6px;border-radius:3px;font-family:Consolas,"Courier New",monospace;font-size:13px',
   img:   'max-width:100%;height:auto;display:block;margin:.8em auto;border-radius:4px',
   hr:    'margin:1.2em 0;border:none;border-top:1px solid #eee',
 };
@@ -875,9 +880,9 @@ function renderImages() {
       input.onchange = () => {
         if (!input.files[0]) return;
         const file = input.files[0];
-        const maxSize = 2 * 1024 * 1024; // 2MB
-        if (file.size > maxSize) {
-          toast(`图片过大 (${(file.size/1024/1024).toFixed(1)}MB)，建议压缩后上传`, 2500);
+        const fileMB = file.size / 1024 / 1024;
+        if (fileMB > 3) {
+          toast(`⚠️ 图片 ${fileMB.toFixed(1)}MB 偏大，转 base64 后约 ${(fileMB*1.4).toFixed(0)}MB，建议压缩到 2MB 以下`, 3000);
         }
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -886,7 +891,7 @@ function renderImages() {
           // Update preview
           const imgs = preview.querySelectorAll('img');
           if (imgs[i]) imgs[i].setAttribute('src', dataUrl);
-          toast(`✅ 已嵌入 ${file.name} (${(dataUrl.length/1024).toFixed(0)}KB)`);
+          toast(`✅ 已嵌入 ${file.name} (原${fileMB.toFixed(1)}MB → base64 ${dataKB}KB)`);
           renderImages();
         };
         reader.readAsDataURL(file);
