@@ -140,11 +140,12 @@ body{
 #preview a{color:#07c160;text-decoration:underline}
 #preview hr{margin:1.2em 0;border:none;border-top:1px solid #eee}
 #preview pre{
-  background:#1e1e1e;color:#d4d4d4;padding:14px 16px;border-radius:8px;
-  overflow-x:auto;margin:.8em 0;font-size:13px;line-height:1.6;
+  background:#0d1117;color:#e6edf3;padding:16px;margin:0;
+  overflow-x:auto;font-size:13px;line-height:1.6;
   font-family:Consolas,"Courier New",monospace;white-space:pre;
+  border-radius:0;
 }
-#preview pre code{background:none;padding:0;color:inherit;font-size:inherit}
+#preview pre code{background:none;padding:0;color:inherit;font-size:inherit;white-space:pre}
 #preview code{
   background:#f0f0f0;color:#e74c3c;padding:2px 6px;border-radius:3px;
   font-family:Consolas,"Courier New",monospace;font-size:13px;
@@ -191,7 +192,7 @@ body{
 <body>
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v5.2</span>
+  <span class="badge">v5.3</span>
   <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
@@ -446,7 +447,7 @@ const TPL = {
 <div style="background:#f0faf4;border-radius:8px;padding:14px 18px;margin:1.5em 0;">
 <p style="font-size:14px;color:#2c6e49;line-height:1.7;margin:0;">💡 <strong>提示：</strong>这里可以放一个重要的提示信息，帮助读者避免常见的踩坑。</p>
 </div>
-<pre style="background:#1e1e1e;color:#d4d4d4;padding:14px 16px;border-radius:8px;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;margin:1.5em 0;"><code style="background:none;color:inherit;padding:0;font-size:inherit;">// 代码示例
+<pre style="background:#0d1117;color:#e6edf3;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,'Courier New',monospace;"><code class="language-js" style="background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;">// 代码示例
 function hello() {
   const msg = "Hello World!";
   console.log(msg);
@@ -456,7 +457,7 @@ function hello() {
 <p style="font-size:15px;line-height:1.8;margin:1em 0;">按照以下步骤操作：</p>
 <ol style="font-size:15px;line-height:2;margin:1em 0;padding-left:2em;">
 <li>打开终端，进入项目目录</li>
-<li>运行初始化命令 <code style="background:#f0f0f0;padding:1px 6px;border-radius:3px;">npm init</code></li>
+<li>运行初始化命令 <code style="background:#f0f0f0;color:#e74c3c;padding:2px 6px;border-radius:3px;font-family:Consolas,'Courier New',monospace;font-size:13px;">npm init</code></li>
 <li>验证输出结果</li>
 </ol>
 <hr style="margin:1.5em 0;">
@@ -588,7 +589,7 @@ const DEFAULTS = {
   th:    'border:1px solid #ddd;padding:6px 10px;background:#f7f7f7;font-weight:600',
   td:    'border:1px solid #ddd;padding:6px 10px',
   blockquote: 'margin:.8em 0;padding:8px 14px;background:#f7f7f7;border-left:4px solid #07c160;color:#666',
-  pre:   'background:#1e1e1e;color:#d4d4d4;padding:14px 16px;border-radius:8px;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace',
+  pre:   'background:#0d1117;color:#e6edf3;padding:16px;margin:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace',
   code:  'background:#f0f0f0;color:#e74c3c;padding:2px 6px;border-radius:3px;font-family:Consolas,"Courier New",monospace;font-size:13px',
   img:   'max-width:100%;height:auto;display:block;margin:.8em auto;border-radius:4px',
   hr:    'margin:1.2em 0;border:none;border-top:1px solid #eee',
@@ -748,13 +749,16 @@ function convertHTML(html) {
   }
   Array.from(body.children).forEach(walk);
 
-  // ---- Step 4: Clean class/id from output (not needed in WeChat) ----
+  // ---- Step 4: Transform <pre><code> to GitHub-style blocks ----
+  wrapCodeBlocks(doc);
+
+  // ---- Step 5: Clean class/id from output (not needed in WeChat) ----
   doc.querySelectorAll('[class],[id]').forEach(el => {
     el.removeAttribute('class');
     el.removeAttribute('id');
   });
 
-  // ---- Step 5: Extract image info ----
+  // ---- Step 6: Extract image info ----
   const images = [];
   doc.querySelectorAll('img').forEach(img => {
     const src = img.getAttribute('src') || '';
@@ -768,7 +772,7 @@ function convertHTML(html) {
     });
   });
 
-  // ---- Step 6: Serialize ----
+  // ---- Step 7: Serialize ----
   let out = body.innerHTML;
   out = out.replace(/<\/?body[^>]*>/gi,'');
   out = out.replace(/<\/?html[^>]*>/gi,'');
@@ -812,6 +816,62 @@ function stripBadCSS(css) {
       return true;
     })
     .join('; ');
+}
+
+/**
+ * Map language identifiers to display labels for GitHub code block headers.
+ */
+const LANG_LABELS = {
+  js:'JavaScript', javascript:'JavaScript', ts:'TypeScript', typescript:'TypeScript',
+  py:'Python', python:'Python', rb:'Ruby', ruby:'Ruby',
+  java:'Java', go:'Go', rust:'Rust', c:'C', cpp:'C++',
+  html:'HTML', htm:'HTML', css:'CSS', scss:'SCSS', less:'Less',
+  json:'JSON', xml:'XML', yaml:'YAML', yml:'YAML', md:'Markdown', markdown:'Markdown',
+  sh:'Shell', bash:'Bash', zsh:'Shell', sql:'SQL', php:'PHP',
+  swift:'Swift', kotlin:'Kotlin', scala:'Scala', r:'R', dart:'Dart',
+};
+
+/**
+ * Transform <pre><code> blocks into GitHub-style code blocks.
+ * Adds a header bar with language label and a wrapper with rounded border.
+ */
+function wrapCodeBlocks(doc) {
+  doc.querySelectorAll('pre').forEach(pre => {
+    const code = pre.querySelector('code');
+    if (!code) return;
+
+    // Detect language from class="language-*", data-language, or infer
+    let lang = 'Code';
+    const cls = code.getAttribute('class') || '';
+    const dataLang = pre.getAttribute('data-language') || '';
+    const match = cls.match(/language-([\w#+]+)/i);
+    if (match) {
+      const raw = match[1];
+      lang = LANG_LABELS[raw.toLowerCase()] || raw;
+    } else if (dataLang) {
+      lang = LANG_LABELS[dataLang.toLowerCase()] || dataLang;
+    }
+
+    // Build wrapper
+    const wrap = doc.createElement('div');
+    wrap.setAttribute('style', 'border:1px solid #30363d;border-radius:6px;overflow:hidden;margin:.8em 0;');
+
+    // Build header
+    const hdr = doc.createElement('div');
+    hdr.setAttribute('style', 'background:#161b22;padding:6px 16px;border-bottom:1px solid #30363d;font-size:12px;color:#8b949e;font-family:Consolas,"Courier New",monospace;line-height:1.8;');
+    hdr.textContent = lang;
+
+    // Reset pre for GitHub dark code area
+    pre.setAttribute('style', 'background:#0d1117;color:#e6edf3;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace;');
+
+    // Reset code inside pre
+    code.setAttribute('style', 'background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;');
+
+    // Reparent
+    pre.parentNode.replaceChild(wrap, pre);
+    wrap.appendChild(hdr);
+    wrap.appendChild(pre);
+  });
 }
 
 /* ========== Image Manager with Upload ========== */
@@ -1151,7 +1211,7 @@ htmlInput.value = `<h1 style="text-align:center;font-size:22px;color:#2c3e50;let
 <tr><td style="border:1px solid #ddd;padding:8px 12px;">功能 B</td><td style="border:1px solid #ddd;padding:8px 12px;">这是功能 B 的描述</td></tr></tbody>
 </table>
 <h2 style="font-size:18px;font-weight:700;color:#2c3e50;border-left:4px solid #07c160;padding-left:12px;margin:1.5em 0 0.8em;">代码示例</h2>
-<pre style="background:#1e1e1e;color:#d4d4d4;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:1em 0;"><code style="background:none;color:inherit;padding:0;">// 代码区块示例
+<pre style="background:#0d1117;color:#e6edf3;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,'Courier New',monospace;"><code class="language-js" style="background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;">// 代码区块示例
 function greet(name) {
   return "Hello, " + name + "!";
 }
