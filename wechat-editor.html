@@ -2,131 +2,93 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1000">
+<meta name="viewport" content="width=1070">
 <title>微信公众号排版转换工具</title>
 <style>
-/* ===== Reset & Base ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
   background:#f0f2f5;color:#2c3e50;min-height:100vh;
 }
-
-/* ===== Header ===== */
 .header{
   background:linear-gradient(135deg,#07c160 0%,#06ad56 100%);
-  color:#fff;padding:16px 28px;
+  color:#fff;padding:14px 24px;
   box-shadow:0 2px 8px rgba(7,193,96,.3);
   position:sticky;top:0;z-index:100;
-  display:flex;align-items:center;gap:20px;
+  display:flex;align-items:center;gap:16px;
 }
-.header h1{font-size:20px;font-weight:700}
-.header p{font-size:12px;opacity:.75}
-.header .badge{
-  background:rgba(255,255,255,.2);padding:2px 10px;
-  border-radius:10px;font-size:11px;
-}
-
-/* ===== Layout ===== */
-.main{display:flex;gap:0;height:calc(100vh - 60px)}
-
-/* ===== Left Panel ===== */
-.panel-left{
-  flex:1;min-width:0;display:flex;flex-direction:column;
-  background:#fff;border-right:1px solid #e8e8e8;
-}
+.header h1{font-size:19px;font-weight:700}
+.header p{font-size:12px;opacity:.78}
+.header .badge{background:rgba(255,255,255,.2);padding:1px 9px;border-radius:9px;font-size:11px}
+.main{display:flex;gap:0;height:calc(100vh - 55px)}
+.panel-left{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e8e8e8}
 .panel-tabs{display:flex;border-bottom:1px solid #e8e8e8;background:#fafafa;flex-shrink:0}
 .panel-tab{
-  padding:9px 18px;font-size:13px;cursor:pointer;
-  border:none;background:none;color:#666;font-weight:500;
-  position:relative;transition:color .15s;
+  padding:8px 16px;font-size:13px;cursor:pointer;
+  border:none;background:none;color:#666;font-weight:500;position:relative;transition:color .15s;
 }
 .panel-tab:hover{color:#07c160}
 .panel-tab.active{color:#07c160;background:#fff}
-.panel-tab.active::after{
-  content:'';position:absolute;bottom:-1px;left:0;right:0;
-  height:2px;background:#07c160;
-}
+.panel-tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:#07c160}
 .panel-body{flex:1;display:flex;flex-direction:column;min-height:0}
 .panel-body.hidden{display:none}
-
-/* Input area */
 #htmlInput{
-  flex:1;width:100%;padding:14px 16px;
+  flex:1;width:100%;padding:12px 14px;
   border:none;outline:none;resize:none;
   font-family:"Cascadia Code","Fira Code",Consolas,monospace;
   font-size:13px;line-height:1.7;tab-size:2;
 }
-#htmlInput:focus{background:#fafff8}
-
-/* Drop zone */
 .upload-zone{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:14px;color:#999;cursor:pointer;
-  border:2px dashed #ddd;margin:16px;border-radius:12px;
-  transition:all .2s;
+  border:2px dashed #ddd;margin:14px;border-radius:12px;transition:all .2s;
 }
 .upload-zone:hover,.upload-zone.dragover{border-color:#07c160;color:#07c160;background:#f0faf4}
-.upload-zone svg{width:44px;height:44px;opacity:.4}
-.upload-zone p{font-size:14px}
-
-/* Template grid */
-.template-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;padding:14px}
+.upload-zone svg{width:40px;height:40px;opacity:.4}
+.upload-zone p{font-size:13px}
+.template-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:6px;padding:12px}
 .template-card{
-  padding:12px 8px;border:1px solid #eee;border-radius:8px;
-  text-align:center;cursor:pointer;font-size:12px;color:#666;
-  transition:all .15s;
+  padding:10px 6px;border:1px solid #eee;border-radius:8px;
+  text-align:center;cursor:pointer;font-size:12px;color:#666;transition:all .15s;
 }
 .template-card:hover{border-color:#07c160;color:#07c160;background:#f0faf4}
-.template-card .icon{font-size:20px;margin-bottom:4px;display:block}
-
-/* Image Manager */
-.image-manager{
-  flex:1;overflow-y:auto;padding:14px;
-  display:flex;flex-direction:column;gap:10px;
-}
+.template-card .icon{font-size:18px;margin-bottom:3px;display:block}
+.image-manager{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
 .image-card{
-  display:flex;gap:12px;align-items:center;
-  padding:10px 12px;border:1px solid #eee;border-radius:8px;
-  transition:border-color .15s;
+  display:flex;gap:10px;align-items:center;
+  padding:8px 10px;border:1px solid #eee;border-radius:8px;transition:border-color .15s;
 }
 .image-card:hover{border-color:#07c160}
 .image-card .thumb{
-  width:60px;height:60px;border-radius:4px;overflow:hidden;flex-shrink:0;
+  width:50px;height:50px;border-radius:4px;overflow:hidden;flex-shrink:0;
   background:#f5f5f5;display:flex;align-items:center;justify-content:center;
 }
 .image-card .thumb img{width:100%;height:100%;object-fit:cover}
 .image-card .thumb .broken{color:#ccc;font-size:11px}
 .image-card .info{flex:1;min-width:0}
-.image-card .info .path{font-size:12px;color:#666;word-break:break-all;margin-bottom:2px}
-.image-card .info .meta{font-size:11px;color:#bbb}
+.image-card .info .path{font-size:11px;color:#666;word-break:break-all;margin-bottom:1px}
+.image-card .info .meta{font-size:10px;color:#bbb}
 .image-card .actions{display:flex;gap:4px;flex-shrink:0}
 .image-card .actions button{
-  padding:4px 10px;font-size:11px;border:1px solid #ddd;
+  padding:3px 8px;font-size:10px;border:1px solid #ddd;
   border-radius:4px;background:#fff;cursor:pointer;color:#666;
 }
 .image-card .actions button:hover{border-color:#07c160;color:#07c160}
 .image-card .broken-tag{
-  display:inline-block;padding:1px 8px;border-radius:3px;
-  font-size:10px;background:#ffeaa7;color:#856404;margin-left:6px;
+  display:inline-block;padding:0 7px;border-radius:3px;
+  font-size:10px;background:#ffeaa7;color:#856404;margin-left:4px;
 }
-.image-manager-empty{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  color:#ccc;font-size:14px;
-}
+.image-manager-empty{flex:1;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:13px}
 
-/* ===== Toolbar ===== */
 .toolbar{
-  display:flex;gap:6px;padding:8px 14px;
-  border-top:1px solid #e8e8e8;flex-wrap:wrap;
-  align-items:center;flex-shrink:0;
+  display:flex;gap:6px;padding:7px 12px;
+  border-top:1px solid #e8e8e8;flex-wrap:wrap;align-items:center;flex-shrink:0;
 }
 .toolbar .spacer{flex:1}
 .btn{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:6px 14px;border:none;border-radius:6px;
-  font-size:13px;cursor:pointer;font-weight:500;
+  display:inline-flex;align-items:center;gap:3px;
+  padding:5px 12px;border:none;border-radius:5px;
+  font-size:12px;cursor:pointer;font-weight:500;
   transition:all .15s;white-space:nowrap;
 }
 .btn:active{transform:scale(.97)}
@@ -134,105 +96,86 @@ body{
 .btn-primary:hover{background:#06ad56}
 .btn-success{background:#2ecc71;color:#fff}
 .btn-success:hover{background:#27ae60}
-.btn-warning{background:#f39c12;color:#fff}
-.btn-warning:hover{background:#e67e22}
 .btn-outline{background:#fff;color:#555;border:1px solid #ddd}
 .btn-outline:hover{background:#f5f5f5;border-color:#ccc}
 .btn-danger{background:#e74c3c;color:#fff}
 .btn-danger:hover{background:#c0392b}
-.btn-sm{padding:3px 8px;font-size:11px}
+.btn-sm{padding:2px 7px;font-size:11px}
 
-/* ===== Right Panel ===== */
-.panel-right{
-  flex:1;min-width:0;display:flex;flex-direction:column;
-  background:#f5f5f5;
-}
+.panel-right{flex:1;min-width:0;display:flex;flex-direction:column;background:#f5f5f5}
 .preview-toolbar{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 14px;background:#fff;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 12px;background:#fff;
   border-bottom:1px solid #e8e8e8;flex-shrink:0;
 }
-.preview-toolbar .info{font-size:12px;color:#999;flex:1;text-align:right}
-
-/* Phone preview */
-.preview-wrapper{
-  flex:1;display:flex;align-items:flex-start;justify-content:center;
-  padding:20px 14px;overflow:auto;
-}
+.preview-toolbar .info{font-size:11px;color:#999;flex:1;text-align:right}
+.preview-wrapper{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:16px 12px;overflow:auto}
 .preview-phone{
-  width:420px;min-height:650px;
-  background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.1);
-  border-radius:12px;overflow:hidden;
+  width:420px;min-height:600px;
+  background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.1);border-radius:10px;overflow:hidden;
 }
 .preview-bar{
-  display:flex;align-items:center;gap:6px;
-  padding:14px 20px 8px;border-bottom:1px solid #eee;
+  display:flex;align-items:center;gap:5px;
+  padding:12px 18px 6px;border-bottom:1px solid #eee;
 }
-.preview-bar .dot{display:inline-block;width:6px;height:6px;border-radius:50%}
+.preview-bar .dot{display:inline-block;width:5px;height:5px;border-radius:50%}
 .preview-bar .dot.r{background:#ff5f57}
 .preview-bar .dot.y{background:#ffbd2e}
 .preview-bar .dot.g{background:#28c840}
 .preview-bar .label{font-size:10px;color:#ccc;margin-left:4px}
-
-#preview{
-  padding:14px 20px 36px;
-  font-size:15px;line-height:1.75;color:#333;
-  min-height:360px;
-}
-#preview p{margin:0 0 .8em}
+#preview{padding:12px 18px 30px;font-size:15px;line-height:1.75;color:#333;min-height:320px}
+#preview p{margin:0 0 .75em}
 #preview p:empty{display:none}
-#preview h1,#preview h2,#preview h3,#preview h4{margin:1.1em 0 .5em;font-weight:700;line-height:1.5}
+#preview h1,#preview h2,#preview h3,#preview h4{margin:1em 0 .4em;font-weight:700;line-height:1.5}
 #preview h1{font-size:20px;text-align:center}
 #preview h2{font-size:18px}
 #preview h3{font-size:16px}
-#preview blockquote{
-  margin:1em 0;padding:10px 16px;background:#f7f7f7;
-  border-left:4px solid #07c160;color:#666;font-size:14px;
-}
-#preview ul,#preview ol{margin:.8em 0;padding-left:2em}
-#preview li{margin:.25em 0}
-#preview table{width:100%;margin:1em 0;border-collapse:collapse;font-size:14px}
-#preview th,#preview td{border:1px solid #ddd;padding:8px 12px;text-align:left}
+#preview blockquote{margin:.8em 0;padding:8px 14px;background:#f7f7f7;border-left:4px solid #07c160;color:#666;font-size:14px}
+#preview ul,#preview ol{margin:.7em 0;padding-left:2em}
+#preview li{margin:.2em 0}
+#preview table{width:100%;margin:.8em 0;border-collapse:collapse;font-size:14px}
+#preview th,#preview td{border:1px solid #ddd;padding:6px 10px;text-align:left}
 #preview th{background:#f7f7f7;font-weight:600}
-#preview img{max-width:100%;height:auto;display:block;margin:1em auto;border-radius:4px}
+#preview img{max-width:100%;height:auto;display:block;margin:.8em auto;border-radius:4px}
 #preview a{color:#07c160;text-decoration:underline}
-#preview hr{margin:1.3em 0;border:none;border-top:1px solid #eee}
+#preview hr{margin:1.2em 0;border:none;border-top:1px solid #eee}
 #preview code{background:#f5f5f5;padding:1px 5px;border-radius:3px;font-size:13px;font-family:Consolas,monospace}
 #preview pre{
-  background:#2d2d2d;color:#f8f8f2;padding:14px 16px;border-radius:6px;
-  overflow-x:auto;margin:1em 0;font-size:13px;line-height:1.6;
+  background:#2d2d2d;color:#f8f8f2;padding:12px 14px;border-radius:6px;
+  overflow-x:auto;margin:.8em 0;font-size:13px;line-height:1.5;
 }
 #preview pre code{background:none;padding:0;color:inherit;font-size:inherit}
 
-/* ===== Toast ===== */
+.debug-panel{display:none;border-top:2px solid #e74c3c;background:#1e1e1e;color:#d4d4d4;padding:10px 14px;font-size:12px;font-family:Consolas,monospace;max-height:200px;overflow:auto}
+.debug-panel.open{display:block}
+
 .toast{
-  position:fixed;bottom:36px;left:50%;transform:translateX(-50%);
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.78);color:#fff;
-  padding:10px 24px;border-radius:8px;
-  font-size:14px;z-index:999;pointer-events:none;
+  padding:8px 22px;border-radius:8px;
+  font-size:13px;z-index:999;pointer-events:none;
   opacity:0;transition:opacity .3s;
 }
 .toast.show{opacity:1}
 
-/* ===== Modal ===== */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.4);
   z-index:998;display:none;align-items:center;justify-content:center;
 }
 .modal-overlay.open{display:flex}
 .modal-box{
-  background:#fff;border-radius:12px;padding:24px;
-  width:480px;max-width:90vw;max-height:80vh;
+  background:#fff;border-radius:12px;padding:22px;
+  width:460px;max-width:90vw;
   box-shadow:0 8px 40px rgba(0,0,0,.15);
 }
-.modal-box h3{font-size:16px;margin-bottom:12px}
-.modal-box label{font-size:13px;color:#666;display:block;margin-bottom:4px}
+.modal-box h3{font-size:15px;margin-bottom:10px}
+.modal-box label{font-size:12px;color:#666;display:block;margin-bottom:4px}
 .modal-box input[type="text"]{
-  width:100%;padding:8px 12px;border:1px solid #ddd;
-  border-radius:6px;font-size:13px;margin-bottom:12px;
+  width:100%;padding:7px 10px;border:1px solid #ddd;
+  border-radius:5px;font-size:13px;margin-bottom:10px;
 }
 .modal-box input[type="text"]:focus{border-color:#07c160;outline:none}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.modal-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:12px}
 
 @media(max-width:800px){
   .main{flex-direction:column;height:auto}
@@ -242,18 +185,13 @@ body{
 </style>
 </head>
 <body>
-
-<!-- ===== Header ===== -->
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v3.0</span>
-  <p>HTML → WeChat 兼容 · CSS 内联化 · 图片管理 · 一键复制</p>
+  <span class="badge">v4.0</span>
+  <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
-<!-- ===== Main Layout ===== -->
 <div class="main">
-
-  <!-- ===== Left: Input ===== -->
   <div class="panel-left">
     <div class="panel-tabs">
       <button class="panel-tab active" data-tab="code">HTML 源码</button>
@@ -261,13 +199,9 @@ body{
       <button class="panel-tab" data-tab="templates">排版模板</button>
       <button class="panel-tab" data-tab="images">图片管理 <span id="imgBadge" style="font-size:10px;color:#999;"></span></button>
     </div>
-
-    <!-- Code tab -->
     <div class="panel-body" id="panel-code">
-      <textarea id="htmlInput" placeholder="在此粘贴 HTML 代码…&#10;支持：粘贴源码 / 从网页复制后粘贴 / Ctrl+V 带格式粘贴&#10;快捷键 Ctrl+Enter 转换"></textarea>
+      <textarea id="htmlInput" placeholder="在此粘贴 HTML 代码…&#10;Ctrl+Enter 快速转换"></textarea>
     </div>
-
-    <!-- Upload tab -->
     <div class="panel-body hidden" id="panel-upload">
       <div class="upload-zone" id="dropZone">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -275,12 +209,10 @@ body{
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        <p>点击选择 HTML 文件，或拖拽文件到这里</p>
+        <p>点击选择 HTML 文件，或拖拽到此处</p>
         <input type="file" id="fileInput" accept=".html,.htm" hidden>
       </div>
     </div>
-
-    <!-- Templates tab -->
     <div class="panel-body hidden" id="panel-templates">
       <div class="template-grid">
         <div class="template-card" data-template="article"><span class="icon">📝</span>文章正文</div>
@@ -295,28 +227,24 @@ body{
         <div class="template-card" data-template="reading"><span class="icon">📚</span>读书笔记</div>
       </div>
     </div>
-
-    <!-- Images tab -->
     <div class="panel-body hidden" id="panel-images">
       <div class="image-manager" id="imageManager">
         <div class="image-manager-empty">请先转换内容，图片会自动出现在这里</div>
       </div>
     </div>
-
-    <!-- Bottom toolbar -->
     <div class="toolbar">
       <button class="btn btn-primary" id="convertBtn">🔄 转换</button>
       <button class="btn btn-outline" id="clearBtn">🗑️ 清空</button>
+      <button class="btn btn-outline btn-sm" id="debugBtn" style="color:#e74c3c;">🐛 HTML 源码</button>
       <span class="spacer"></span>
-      <span id="stats" style="font-size:12px;color:#999;"></span>
+      <span id="stats" style="font-size:11px;color:#999;"></span>
     </div>
   </div>
 
-  <!-- ===== Right: Preview & Tools ===== -->
   <div class="panel-right">
     <div class="preview-toolbar">
       <button class="btn btn-success" id="copyHtmlBtn">📋 复制 HTML</button>
-      <button class="btn btn-success" id="copyRichBtn">📋 复制富文本</button>
+      <button class="btn btn-success" id="copyRichBtn">📋 复制富文本（推荐）</button>
       <button class="btn btn-outline btn-sm" id="exportBtn">💾 导出</button>
       <span class="info" id="previewInfo"></span>
     </div>
@@ -329,13 +257,12 @@ body{
         <div id="preview"></div>
       </div>
     </div>
+    <pre class="debug-panel" id="debugPanel"></pre>
   </div>
 </div>
 
-<!-- ===== Toast ===== -->
 <div class="toast" id="toast"></div>
 
-<!-- ===== Modal ===== -->
 <div class="modal-overlay" id="modal">
   <div class="modal-box">
     <h3 id="modalTitle">编辑图片路径</h3>
@@ -349,62 +276,40 @@ body{
 </div>
 
 <script>
-(function() {
+(function(){
 'use strict';
 
-/* ===================================================
-   DOM references
-   =================================================== */
-const htmlInput     = document.getElementById('htmlInput');
-const preview       = document.getElementById('preview');
-const convertBtn    = document.getElementById('convertBtn');
-const clearBtn      = document.getElementById('clearBtn');
-const copyHtmlBtn   = document.getElementById('copyHtmlBtn');
-const copyRichBtn   = document.getElementById('copyRichBtn');
-const exportBtn     = document.getElementById('exportBtn');
-const stats         = document.getElementById('stats');
-const previewInfo   = document.getElementById('previewInfo');
-const toast         = document.getElementById('toast');
-const fileInput     = document.getElementById('fileInput');
-const dropZone      = document.getElementById('dropZone');
-const imageManager  = document.getElementById('imageManager');
-const imgBadge      = document.getElementById('imgBadge');
-const modal         = document.getElementById('modal');
-const modalTitle    = document.getElementById('modalTitle');
-const modalInput    = document.getElementById('modalInput');
-const modalConfirm  = document.getElementById('modalConfirm');
-const modalCancel   = document.getElementById('modalCancel');
+/* ========== DOM refs ========== */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const htmlInput = $('#htmlInput');
+const preview  = $('#preview');
+const debugPanel = $('#debugPanel');
 
-let imageList = []; // {origSrc, currentSrc, alt, width, height, broken}
-let modalCallback = null;
-
-/* ===================================================
-   Toast
-   =================================================== */
-let toastTimer;
-function showToast(msg, duration) {
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), duration || 2000);
+/* ========== Toast ========== */
+let tmr;
+function toast(msg, dur) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(tmr);
+  tmr = setTimeout(() => el.classList.remove('show'), dur||1800);
 }
 
-/* ===================================================
-   Tab switching
-   =================================================== */
-document.querySelectorAll('.panel-tab').forEach(tab => {
+/* ========== Tab switch ========== */
+$$('.panel-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    $$('.panel-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    document.querySelectorAll('.panel-body').forEach(p => p.classList.add('hidden'));
-    const target = document.getElementById('panel-' + tab.dataset.tab);
-    if (target) target.classList.remove('hidden');
+    $$('.panel-body').forEach(p => p.classList.add('hidden'));
+    const tgt = document.getElementById('panel-' + tab.dataset.tab);
+    if (tgt) tgt.classList.remove('hidden');
   });
 });
 
-/* ===================================================
-   File upload
-   =================================================== */
+/* ========== File upload ========== */
+const dropZone = $('#dropZone');
+const fileInput = $('#fileInput');
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
@@ -414,22 +319,14 @@ dropZone.addEventListener('drop', e => {
   if (f && /\.html?$/i.test(f.name)) readFile(f);
 });
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) readFile(fileInput.files[0]); });
-
 function readFile(file) {
   const r = new FileReader();
-  r.onload = e => {
-    htmlInput.value = e.target.result;
-    document.querySelector('[data-tab="code"]').click();
-    doConvert();
-    showToast(`已加载 ${file.name}（${(file.size/1024).toFixed(1)}KB）`);
-  };
+  r.onload = e => { htmlInput.value = e.target.result; $$('[data-tab="code"]')[0].click(); convert(); toast('已加载 '+file.name); };
   r.readAsText(file, 'UTF-8');
 }
 
-/* ===================================================
-   Templates
-   =================================================== */
-const TEMPLATES = {
+/* ========== Templates ========== */
+const TPL = {
   article: `<h1 style="text-align:center;">文章标题</h1>
 <p style="text-indent:2em;">这是正文段落。建议段落间用空行分隔，提升阅读体验。适当使用<strong>加粗</strong>、<span style="color:#e74c3c;">彩色文字</span>等样式突出重点。</p>
 <h2>一、章节标题</h2>
@@ -469,7 +366,6 @@ const TEMPLATES = {
 <h2>☐ 事项二</h2><p style="text-indent:2em;color:#666;">补充说明。</p>
 <hr><p style="text-align:center;color:#999;font-size:13px;">完成一项，划掉一项</p>`,
 
-  // ===== 新增 4 套模板 =====
   tutorial: `<h1 style="text-align:center;">技术教程标题</h1>
 <p style="color:#999;font-size:13px;text-align:center;">适用场景 · 2025年4月</p>
 <hr>
@@ -481,8 +377,8 @@ const TEMPLATES = {
 <li>Git 版本控制</li>
 </ul>
 <h2>📖 第一步：基础概念</h2>
-<p style="text-indent:2em;">首先理解这个核心概念，它是后面所有操作的基础。</p>
-<blockquote><strong>提示：</strong>这里可以放一个重要的提示或注意事项，帮助读者避免踩坑。</blockquote>
+<p style="text-indent:2em;">首先理解核心概念，它是后面所有操作的基础。</p>
+<blockquote><strong>提示：</strong>这里可以放一个重要的提示，帮助读者避免踩坑。</blockquote>
 <pre><code>// 代码示例
 function hello() {
   console.log("Hello World!");
@@ -564,315 +460,167 @@ function hello() {
 <p style="text-align:center;color:#999;font-size:13px;">以上是本期读书笔记，欢迎在评论区交流</p>`
 };
 
-document.querySelectorAll('[data-template]').forEach(card => {
+$$('[data-template]').forEach(card => {
   card.addEventListener('click', () => {
-    try {
-      const tpl = TEMPLATES[card.dataset.template];
-      if (!tpl) {
-        showToast('模板内容为空', 1500);
-        return;
-      }
-      htmlInput.value = tpl;
-      document.querySelector('[data-tab="code"]').click();
-      setTimeout(() => doConvert(), 50);
-      showToast('已加载模板');
-    } catch(e) {
-      showToast('模板加载失败：' + e.message, 2000);
-    }
+    const tpl = TPL[card.dataset.template];
+    if (!tpl) { toast('模板内容为空',1200); return; }
+    htmlInput.value = tpl;
+    $$('[data-tab="code"]')[0].click();
+    setTimeout(convert, 30);
+    toast('已加载模板');
   });
 });
 
-/* ===================================================
-   MODAL
-   =================================================== */
-function showModal(title, initialValue, callback) {
-  modalTitle.textContent = title;
-  modalInput.value = initialValue || '';
+/* ========== Modal ========== */
+const modal = $('#modal');
+const modalInput = $('#modalInput');
+let modalCb = null;
+function showModal(title, val, cb) {
+  $('#modalTitle').textContent = title;
+  modalInput.value = val||'';
   modal.classList.add('open');
-  modalCallback = callback;
-  setTimeout(() => modalInput.focus(), 100);
+  modalCb = cb;
+  setTimeout(() => modalInput.focus(), 80);
 }
-function closeModal() { modal.classList.remove('open'); modalCallback = null; }
-modalConfirm.addEventListener('click', () => {
-  if (modalCallback) modalCallback(modalInput.value);
-  closeModal();
-});
-modalCancel.addEventListener('click', closeModal);
-modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-modalInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') modalConfirm.click();
-  if (e.key === 'Escape') closeModal();
-});
+function closeModal() { modal.classList.remove('open'); modalCb = null; }
+$('#modalConfirm').addEventListener('click', () => { if(modalCb) modalCb(modalInput.value); closeModal(); });
+$('#modalCancel').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if(e.target===modal) closeModal(); });
+modalInput.addEventListener('keydown', e => { if(e.key==='Enter') $('#modalConfirm').click(); if(e.key==='Escape') closeModal(); });
 
-/* ===================================================
-   CORE CONVERTER
-   =================================================== */
+/* =====================================================================
+   CORE CONVERSION ENGINE (rewritten v4)
+   ===================================================================== */
 
 /**
- * WeChat-compatible CSS property whitelist.
- * Anything outside this list gets stripped.
+ * Allowed CSS properties (WeChat-compatible subset)
  */
-const WECHAT_STYLE_WHITELIST = new Set([
-  'color','background','background-color',
+const ALLOWED_CSS = new Set([
+  'color','background','background-color','background-image',
   'font-size','font-weight','font-style','font-family',
-  'text-align','text-decoration','text-indent','text-shadow',
-  'line-height','letter-spacing','word-spacing',
+  'text-align','text-decoration','text-indent',
+  'line-height','letter-spacing',
   'margin','margin-top','margin-right','margin-bottom','margin-left',
   'padding','padding-top','padding-right','padding-bottom','padding-left',
   'border','border-top','border-right','border-bottom','border-left',
-  'border-color','border-style','border-width','border-collapse',
-  'border-radius',
+  'border-color','border-style','border-width','border-collapse','border-radius',
   'width','height','max-width','max-height',
-  'display','vertical-align','white-space','word-break',
-  'overflow','overflow-x','overflow-y',
-  'background-image','background-size','background-position',
-  'list-style','list-style-type',
+  'display','vertical-align','white-space',
+  'list-style','list-style-type','overflow',
 ]);
 
-function isAllowedStyleProp(prop) {
-  return WECHAT_STYLE_WHITELIST.has(prop);
+function cleanCSS(css) {
+  if (!css) return '';
+  return css.split(';').map(s => s.trim()).filter(s => {
+    const ci = s.indexOf(':');
+    if (ci < 0) return false;
+    return ALLOWED_CSS.has(s.slice(0, ci).trim());
+  }).join('; ');
 }
 
 /**
- * Parse a CSS string into a map of { selectorText: declarationBlock }
- * Handles comma-separated selectors, @media, comments.
+ * Inline styles that WeChat articles commonly support
  */
-function parseCSS(cssText) {
-  const rules = {};
-  // Remove comments
-  cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
-  // Split by @media blocks
-  const blocks = cssText.split(/@media[^{]+\{/);
-  const rest = blocks[0];
-  // Extract media query contents
-  const mediaMatches = cssText.match(/@media[^{]+\{([\s\S]*?)\}\s*\}/g);
-  if (mediaMatches) {
-    mediaMatches.forEach(m => {
-      const inner = m.replace(/@media[^{]+\{([\s\S]*)\}\s*\}/, '$1');
-      const innerRules = inner.match(/([^{]+)\{([^}]+)\}/g);
-      if (innerRules) {
-        innerRules.forEach(r => {
-          const parts = r.match(/([^{]+)\{([^}]+)\}/);
-          if (parts) rules[parts[1].trim()] = (rules[parts[1].trim()] || '') + ';' + parts[2].trim();
-        });
-      }
-    });
-  }
-  // Extract regular rules
-  const simpleRules = rest.match(/([^{]+)\{([^}]+)\}/g);
-  if (simpleRules) {
-    simpleRules.forEach(r => {
-      const parts = r.match(/([^{]+)\{([^}]+)\}/);
-      if (parts) {
-        const sel = parts[1].trim();
-        rules[sel] = (rules[sel] || '') + ';' + parts[2].trim();
-      }
-    });
-  }
-  return rules;
+const DEFAULT_STYLES = {
+  table: 'width:100%;border-collapse:collapse;margin:.8em 0',
+  th:    'border:1px solid #ddd;padding:6px 10px;background:#f7f7f7;font-weight:600',
+  td:    'border:1px solid #ddd;padding:6px 10px',
+  blockquote: 'margin:.8em 0;padding:8px 14px;background:#f7f7f7;border-left:4px solid #07c160;color:#666',
+  pre:   'background:#2d2d2d;color:#f8f8f2;padding:12px 14px;border-radius:6px;overflow-x:auto;font-size:13px;line-height:1.5',
+  img:   'max-width:100%;height:auto;display:block;margin:.8em auto;border-radius:4px',
+  hr:    'margin:1.2em 0;border:none;border-top:1px solid #eee',
+};
+
+function hasStyle(attr) {
+  return attr && /style/i.test(attr);
 }
 
 /**
- * Check if an element matches a CSS selector.
- * Supports: tag, .class, #id, tag.class, tag#id, .class1.class2, parent child
+ * Ensure an element has a minium set of styles.
+ * Merges with any existing inline style (existing wins on conflict).
  */
-function elementMatchesSelector(el, selector) {
-  if (!el || el.nodeType !== 1) return false;
-  const tag = el.tagName.toLowerCase();
-  const id = el.id || '';
-  const classes = Array.from(el.classList);
-
-  // Descendant selector: "parent child"
-  if (selector.includes(' ')) {
-    const parts = selector.split(/\s+/).filter(Boolean);
-    const childSel = parts.pop();
-    // Check if current element matches the last part
-    if (!elementMatchesSimple(el, childSel)) return false;
-    // Walk up ancestors for the parent parts
-    let parent = el.parentElement;
-    let ancestorSel = parts.join(' ');
-    while (parent) {
-      if (elementMatchesSimple(parent, ancestorSel)) return true;
-      parent = parent.parentElement;
-    }
-    return false;
+function ensureStyle(el, defaultCss) {
+  const existing = el.getAttribute('style') || '';
+  if (!existing && !defaultCss) return;
+  if (!existing) {
+    el.setAttribute('style', defaultCss);
+    return;
   }
-
-  return elementMatchesSimple(el, selector);
-}
-
-function elementMatchesSimple(el, selector) {
-  if (!el || el.nodeType !== 1) return false;
-  const tag = el.tagName.toLowerCase();
-  const id = el.id || '';
-  const classes = Array.from(el.classList);
-
-  // Multiple classes: .class1.class2
-  const classSelectors = selector.match(/\.([\w-]+)/g);
-  const idMatch = selector.match(/#([\w-]+)/);
-  const tagMatch = selector.match(/^([\w-]+)/);
-
-  // Check tag
-  if (tagMatch) {
-    const tagSel = tagMatch[1].toLowerCase();
-    if (tagSel !== tag) return false;
-  }
-
-  // Check id
-  if (idMatch) {
-    if (idMatch[1] !== id) return false;
-  }
-
-  // Check classes
-  if (classSelectors) {
-    const neededClasses = classSelectors.map(c => c.slice(1));
-    if (!neededClasses.every(c => classes.includes(c))) return false;
-  }
-
-  // Bare selector (no tag, no id, no class) — not possible in simple selectors
-  if (!tagMatch && !idMatch && !classSelectors) return false;
-
-  return true;
-}
-
-/**
- * Filter style string to only WeChat-allowed properties.
- */
-function sanitizeCSS(styleStr) {
-  if (!styleStr) return '';
-  const decls = styleStr.split(';').map(d => d.trim()).filter(Boolean);
-  const out = [];
-  for (const d of decls) {
-    const colon = d.indexOf(':');
-    if (colon === -1) continue;
-    const prop = d.slice(0, colon).trim();
-    if (isAllowedStyleProp(prop)) {
-      out.push(d);
-    }
-  }
-  return out.join('; ');
-}
-
-/**
- * Merge two CSS declaration strings (later wins on conflict).
- */
-function mergeCSS(existing, additional) {
-  if (!additional && !existing) return '';
-  if (!additional) return existing || '';
-  if (!existing) return additional;
-
-  const map = new Map();
-  // Parse existing
+  // Merge: existing properties keep their values, missing ones get defaults
+  const merged = {};
+  defaultCss.split(';').forEach(d => {
+    const ci = d.indexOf(':');
+    if (ci > 0) merged[d.slice(0,ci).trim()] = d.slice(ci+1).trim();
+  });
   existing.split(';').forEach(d => {
     const ci = d.indexOf(':');
-    if (ci > 0) map.set(d.slice(0, ci).trim(), d.slice(ci + 1).trim());
+    if (ci > 0) merged[d.slice(0,ci).trim()] = d.slice(ci+1).trim();
   });
-  // Parse additional (override)
-  additional.split(';').forEach(d => {
-    const ci = d.indexOf(':');
-    if (ci > 0) map.set(d.slice(0, ci).trim(), d.slice(ci + 1).trim());
-  });
-  return Array.from(map.entries()).map(([k, v]) => `${k}: ${v}`).join('; ');
+  const out = Object.entries(merged).map(([k,v]) => `${k}:${v}`).join(';');
+  el.setAttribute('style', out);
 }
 
 /**
- * Build a final style for an element from:
- * 1. Its own inline style
- * 2. Matching CSS rules (specificity approximated: more specific selectors win)
+ * Elements NOT supported by WeChat – will be replaced with their text content
  */
-function computeStyle(el, cssRules) {
-  let inlineStyle = el.getAttribute('style') || '';
+const REMOVE_TAGS = new Set([
+  'script','iframe','video','audio','embed','object',
+  'canvas','svg','form','input','select','textarea','button',
+  'nav','aside','footer','header','link','meta','noscript','style',
+]);
 
-  // Find matching rules and compute specificity score
-  const matches = [];
-  for (const [sel, decls] of Object.entries(cssRules)) {
-    if (elementMatchesSelector(el, sel)) {
-      // Approximate specificity: count id > class > tag
-      const idCnt    = (sel.match(/#/g) || []).length;
-      const classCnt = (sel.match(/\./g) || []).length;
-      const tagCnt   = (sel.match(/^[\w-]+|[\s]+[\w-]+/g) || []).length;
-      const score = idCnt * 10000 + classCnt * 100 + tagCnt;
-      matches.push({ sel, decls, score });
-    }
-  }
-  // Sort by specificity descending
-  matches.sort((a, b) => b.score - a.score);
-
-  let merged = '';
-  for (const m of matches) {
-    merged = mergeCSS(merged, m.decls);
-  }
-
-  // Inline style has highest priority
-  merged = mergeCSS(merged, inlineStyle);
-
-  return sanitizeCSS(merged);
-}
+/**
+ * Attributes preserved during conversion
+ */
+const KEEP_ATTRS = new Set([
+  'style','href','src','alt','title','target',
+  'width','height','colspan','rowspan','align','valign',
+  'border','cellpadding','cellspacing','bgcolor',
+]);
 
 /**
  * Main conversion: raw HTML → WeChat-compatible HTML
  */
-function convertToWeChat(rawHtml) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(rawHtml, 'text/html');
+function convertHTML(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const body = doc.body || doc.documentElement;
 
-  // ---- Step 1: Extract & parse <style> blocks ----
-  const styleBlocks = [];
-  doc.querySelectorAll('style').forEach(el => {
-    styleBlocks.push(el.textContent);
-    el.remove();
-  });
-  const cssRules = {};
-  styleBlocks.forEach(css => {
-    const parsed = parseCSS(css);
-    Object.assign(cssRules, parsed);
-  });
-  // Also parse inline style attributes on <link> stylesheets? Not needed for typical HTML.
-
-  // ---- Step 2: Remove unsupported elements (keep their text) ----
-  const REMOVE_TAGS = new Set([
-    'script','iframe','video','audio','embed','object',
-    'canvas','svg','form','input','select','textarea','button',
-    'nav','aside','footer','header','link','meta','noscript'
-  ]);
-  doc.querySelectorAll(Array.from(REMOVE_TAGS).join(',')).forEach(el => {
+  // --- Step 1: Remove unsupported tags (replace with text) ---
+  const removeSel = Array.from(REMOVE_TAGS).join(',');
+  doc.querySelectorAll(removeSel).forEach(el => {
     const txt = document.createTextNode(el.textContent || '');
     el.parentNode.replaceChild(txt, el);
   });
 
-  // ---- Step 3: Process all elements ----
-  const body = doc.body || doc.documentElement;
+  // --- Step 2: Process all elements ---
+  function walk(el) {
+    if (el.nodeType !== 1) return;
+    const tag = el.tagName.toLowerCase();
 
-  function processTree(node) {
-    if (node.nodeType !== 1) return;
-
-    // Strip attributes not allowed in WeChat
-    const ALLOWED_ATTRS = new Set([
-      'style','href','src','alt','title','target',
-      'width','height','colspan','rowspan','align','valign',
-      'border','cellpadding','cellspacing','bgcolor',
-    ]);
-    Array.from(node.attributes).forEach(attr => {
+    // Strip non-allowed attributes
+    Array.from(el.attributes).forEach(attr => {
       const n = attr.name.toLowerCase();
-      if (n === 'style') return; // handled after
-      if (n === 'class' || n === 'id') { node.removeAttribute(n); return; }
-      if (!ALLOWED_ATTRS.has(n)) { node.removeAttribute(n); }
+      if (n==='style' || n==='class' || n==='id') return;
+      if (!KEEP_ATTRS.has(n)) el.removeAttribute(n);
     });
+    el.removeAttribute('class');
+    el.removeAttribute('id');
 
-    // Compute merged inline style
-    const merged = computeStyle(node, cssRules);
-    if (merged) {
-      node.setAttribute('style', merged);
-    } else {
-      node.removeAttribute('style');
+    // Ensure default styles for known elements
+    if (DEFAULT_STYLES[tag]) {
+      ensureStyle(el, DEFAULT_STYLES[tag]);
     }
 
-    // Recurse children
-    Array.from(node.children).forEach(processTree);
-  }
-  Array.from(body.children).forEach(processTree);
+    // Clean up existing style
+    const st = el.getAttribute('style');
+    if (st) el.setAttribute('style', cleanCSS(st));
 
-  // ---- Step 4: Extract images info ----
+    // Recurse children
+    Array.from(el.children).forEach(walk);
+  }
+  Array.from(body.children).forEach(walk);
+
+  // --- Step 3: Extract image info ---
   const images = [];
   doc.querySelectorAll('img').forEach(img => {
     const src = img.getAttribute('src') || '';
@@ -882,346 +630,237 @@ function convertToWeChat(rawHtml) {
       alt: img.getAttribute('alt') || '',
       width: img.getAttribute('width') || '',
       height: img.getAttribute('height') || '',
-      broken: false,
+      broken: !src || src.startsWith('file://'),
     });
   });
 
-  // ---- Step 5: Serialize ----
+  // --- Step 4: Serialize ---
   let out = body.innerHTML;
 
-  // Clean up wrappers
-  out = out.replace(/<\/?body[^>]*>/gi, '');
-  out = out.replace(/<\/?html[^>]*>/gi, '');
-  out = out.replace(/<\/?head[^>]*>/gi, '');
-  out = out.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '');
+  // Clean wrapper tags (shouldn't be needed but just in case)
+  out = out.replace(/<\/?body[^>]*>/gi,'');
+  out = out.replace(/<\/?html[^>]*>/gi,'');
+  out = out.replace(/<\/?head[^>]*>/gi,'');
+  out = out.replace(/<!\[CDATA\[/g,'').replace(/\]\]>/g,'');
 
-  // ---- Step 6: Inject default WeChat styles for bare elements ----
-  out = ensureDefaultStyles(out);
-
-  // ---- Stats ----
+  // --- Step 5: Stats ---
   const textContent = body.textContent || '';
-  const charCount = textContent.replace(/\s/g, '').length;
-  const pCount = (out.match(/<p[ >]/gi) || []).length;
-  const imgCount = (out.match(/<img[ >]/gi) || []).length;
-  const readTime = Math.max(1, Math.round(charCount / 300));
+  const charCount = textContent.replace(/\s/g,'').length;
+  const pCount = (out.match(/<p[ >]/gi)||[]).length;
+  const imgCount = (out.match(/<img[ >]/gi)||[]).length;
+  const readTime = Math.max(1, Math.round(charCount/300));
 
-  return {
-    html: out,
-    images,
-    stats: { chars: charCount, paragraphs: pCount, images: imgCount, readTime },
-  };
+  return { html: out, images, stats: { chars: charCount, paragraphs: pCount, images: imgCount, readTime } };
 }
 
-/**
- * Ensure common elements have default WeChat-friendly styles if they lack them.
- */
-function ensureDefaultStyles(html) {
-  // Wrap orphan text nodes into paragraphs (two+ newlines)
-  html = html.replace(/\n{3,}/g, '\n\n');
+/* ========== Image Manager ========== */
+let imageList = [];
+const imgManager = $('#imageManager');
+const imgBadge = $('#imgBadge');
 
-  // hr
-  html = html.replace(/<hr\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m;
-    return `<hr style="margin:1.3em 0;border:none;border-top:1px solid #eee;"${attrs}>`;
-  });
-
-  // table
-  html = html.replace(/<table\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m.replace(/style="([^"]*)"/i, (_, s) => 'style="width:100%;border-collapse:collapse;margin:1em 0;' + s + '"');
-    return `<table style="width:100%;border-collapse:collapse;margin:1em 0;"${attrs}>`;
-  });
-  html = html.replace(/<th\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m;
-    return `<th style="border:1px solid #ddd;padding:8px 12px;background:#f7f7f7;font-weight:600;"${attrs}>`;
-  });
-  html = html.replace(/<td\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m;
-    return `<td style="border:1px solid #ddd;padding:8px 12px;"${attrs}>`;
-  });
-
-  // blockquote
-  html = html.replace(/<blockquote\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m;
-    return `<blockquote style="margin:1em 0;padding:10px 16px;background:#f7f7f7;border-left:4px solid #07c160;color:#666;"${attrs}>`;
-  });
-
-  // pre
-  html = html.replace(/<pre\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m;
-    return `<pre style="background:#2d2d2d;color:#f8f8f2;padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:13px;line-height:1.6;"${attrs}>`;
-  });
-
-  // img — only if no style
-  html = html.replace(/<img\b([^>]*)>/gi, (m, attrs) => {
-    if (/style=/i.test(attrs)) return m;
-    return `<img style="max-width:100%;height:auto;display:block;margin:1em auto;border-radius:4px;"${attrs}>`;
-  });
-
-  return html;
-}
-
-/* ===================================================
-   Image Manager
-   =================================================== */
-function renderImageManager() {
+function renderImages() {
   if (imageList.length === 0) {
-    imageManager.innerHTML = '<div class="image-manager-empty">当前内容中没有图片</div>';
+    imgManager.innerHTML = '<div class="image-manager-empty">当前内容中没有图片</div>';
     imgBadge.textContent = '';
     return;
   }
-
   imgBadge.textContent = `(${imageList.length})`;
-
-  let html = `<div style="background:#e8f8f0;border:1px solid #b2dfc8;border-radius:8px;padding:10px 14px;font-size:12px;color:#2c6e49;margin-bottom:8px;">
-    💡 图片建议：如果图片无法显示，尝试将图片上传到图床（如 <a href="https://www.boltp.com/?ref=www.7udh.com" target="_blank" style="color:#07c160;text-decoration:underline;">boltp.com</a>），然后把获取的链接粘贴到下方编辑框中。
+  const tip = `<div style="background:#e8f8f0;border:1px solid #b2dfc8;border-radius:8px;padding:8px 12px;font-size:11px;color:#2c6e49;margin-bottom:8px;">
+    💡 图片无法显示？上传到图床（<a href="https://www.boltp.com/?ref=www.7udh.com" target="_blank" style="color:#07c160;">boltp.com</a>），然后编辑下方路径。
   </div>`;
-
-  imageList.forEach((img, idx) => {
+  let cards = tip;
+  imageList.forEach((img, i) => {
     const broken = img.broken || !img.currentSrc || img.currentSrc.startsWith('file://');
-    const thumbSrc = broken ? '' : img.currentSrc;
-    html += `<div class="image-card">
-      <div class="thumb">
-        ${thumbSrc ? `<img src="${escapeHtml(thumbSrc)}" onerror="this.parentElement.innerHTML='<span class=broken>⚠️</span>'; this.closest('.image-card').dataset.broken='1'" alt="">` : '<span class="broken">⚠️</span>'}
-      </div>
+    const thumb = broken ? '<span class="broken">⚠️</span>'
+      : `<img src="${img.currentSrc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}" onerror="this.parentElement.innerHTML='<span class=\\'broken\\'>⚠️</span>'" alt="">`;
+    cards += `<div class="image-card">
+      <div class="thumb">${thumb}</div>
       <div class="info">
-        <div class="path">${escapeHtml(truncatePath(img.currentSrc || '(空)'))} ${broken ? '<span class="broken-tag">需处理</span>' : ''}</div>
-        <div class="meta">${img.alt ? 'alt: ' + escapeHtml(img.alt) + ' · ' : ''}${img.width || img.height ? img.width + '×' + img.height + ' · ' : ''}索引 ${idx + 1}</div>
+        <div class="path">${(img.currentSrc||'(空)').slice(0,50)}${((img.currentSrc||'').length>50?'…':'')} ${broken?'<span class="broken-tag">需处理</span>':''}</div>
+        <div class="meta">${img.alt?'alt: '+img.alt.slice(0,20)+' · ':''}${img.width||img.height?img.width+'×'+img.height+' · ':''}索引 ${i+1}</div>
       </div>
       <div class="actions">
-        <button data-img-index="${idx}" class="btn-edit-path">编辑</button>
-        <button data-img-index="${idx}" class="btn-preview-img" ${thumbSrc ? '' : 'disabled'}>预览</button>
+        <button data-idx="${i}" class="im-edit">编辑</button>
+        <button data-idx="${i}" class="im-preview" ${broken?'disabled':''}>预览</button>
       </div>
     </div>`;
   });
-  imageManager.innerHTML = html;
-
-  // Bind edit
-  imageManager.querySelectorAll('.btn-edit-path').forEach(btn => {
+  imgManager.innerHTML = cards;
+  imgManager.querySelectorAll('.im-edit').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.imgIndex);
-      const img = imageList[idx];
-      showModal('编辑图片路径 - 索引 ' + (idx + 1), img.currentSrc, (newPath) => {
-        if (newPath && newPath !== img.currentSrc) {
-          img.currentSrc = newPath;
-          applyImageChanges();
-          showToast('图片路径已更新');
+      const i = parseInt(btn.dataset.idx);
+      showModal('编辑图片路径 #'+(i+1), imageList[i].currentSrc, (v) => {
+        if (v && v !== imageList[i].currentSrc) {
+          imageList[i].currentSrc = v;
+          syncImages();
+          toast('图片路径已更新');
         }
       });
     });
   });
-
-  // Bind preview
-  imageManager.querySelectorAll('.btn-preview-img').forEach(btn => {
+  imgManager.querySelectorAll('.im-preview').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.imgIndex);
-      const img = imageList[idx];
-      if (img.currentSrc) window.open(img.currentSrc, '_blank');
+      const src = imageList[parseInt(btn.dataset.idx)].currentSrc;
+      if (src) window.open(src, '_blank');
     });
   });
 }
 
-function truncatePath(path, maxLen) {
-  if (!path) return path;
-  if (path.length <= (maxLen || 60)) return path;
-  return path.slice(0, 20) + '…' + path.slice(-35);
-}
-
-function escapeHtml(s) {
-  if (typeof s !== 'string') return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function applyImageChanges() {
-  // Apply current image sources back to the preview HTML
-  let currentHTML = preview.innerHTML;
-  let imgIdx = 0;
-  currentHTML = currentHTML.replace(/<img\b([^>]*)\bsrc="([^"]*)"([^>]*)>/gi, (m, pre, src, post) => {
-    const img = imageList[imgIdx];
-    imgIdx++;
-    if (img && img.currentSrc !== img.origSrc) {
-      return `<img${pre} src="${escapeHtml(img.currentSrc)}"${post}>`;
+function syncImages() {
+  // Re-apply image src changes to the preview DOM
+  let i = 0;
+  preview.querySelectorAll('img').forEach(img => {
+    if (i < imageList.length && imageList[i].currentSrc !== imageList[i].origSrc) {
+      img.setAttribute('src', imageList[i].currentSrc);
     }
-    return m;
+    i++;
   });
-  preview.innerHTML = currentHTML;
-  refreshStats();
 }
 
-/* ===================================================
-   Main doConvert
-   =================================================== */
-function doConvert() {
+/* ========== Main convert function ========== */
+function convert() {
   const raw = htmlInput.value.trim();
   if (!raw) {
     preview.innerHTML = '<p style="color:#bbb;text-align:center;padding:60px 0;">请输入 HTML 内容后点击转换</p>';
-    stats.textContent = '';
-    previewInfo.textContent = '等待输入…';
+    debugPanel.classList.remove('open');
+    debugPanel.textContent = '';
+    $('#stats').textContent = '';
+    $('#previewInfo').textContent = '等待输入…';
     imageList = [];
-    renderImageManager();
+    renderImages();
     return;
   }
 
   try {
-    const result = convertToWeChat(raw);
+    const result = convertHTML(raw);
     preview.innerHTML = result.html;
+    debugPanel.textContent = result.html;
     imageList = result.images;
-    renderImageManager();
+    renderImages();
 
     const s = result.stats;
-    stats.textContent = `字符 ${s.chars} · 段落 ${s.paragraphs} · 图片 ${s.images} · 阅读约 ${s.readTime} 分钟`;
-    previewInfo.textContent = `预览 · ${s.chars} 字`;
+    $('#stats').textContent = `字符 ${s.chars} · 段落 ${s.paragraphs} · 图片 ${s.images} · 阅读约 ${s.readTime} 分钟`;
+    $('#previewInfo').textContent = `预览 · ${s.chars} 字`;
 
-    // Show broken images
+    // Mark broken images in preview
     preview.querySelectorAll('img').forEach(img => {
-      const src = img.getAttribute('src') || '';
-      if (!src || src.startsWith('file://') || src.startsWith('data:') && src.length > 200000) {
+      const src = img.getAttribute('src')||'';
+      if (!src || src.startsWith('file://')) {
         img.style.border = '2px dashed #e74c3c';
         img.style.padding = '4px';
         img.style.background = '#fff5f5';
-        // Mark in imageList
-        const matchIdx = imageList.findIndex(i => i.currentSrc === src || i.origSrc === src);
-        if (matchIdx >= 0) imageList[matchIdx].broken = true;
       }
     });
-    // Also check images in our list that are problematic
-    imageList.forEach((img, idx) => {
-      if (!img.currentSrc || img.currentSrc.startsWith('file://')) {
-        img.broken = true;
-      }
-    });
-    renderImageManager();
 
-  } catch (e) {
-    preview.innerHTML = `<p style="color:#e74c3c;padding:40px 0;text-align:center;">转换出错：${escapeHtml(e.message)}</p>`;
-    showToast('转换出错：' + e.message);
+  } catch(e) {
+    preview.innerHTML = `<p style="color:#e74c3c;padding:40px;text-align:center;">转换出错：${e.message}</p>`;
+    debugPanel.textContent = 'Error: ' + e.message + '\n' + e.stack;
+    toast('转换出错', 2000);
   }
 }
 
-function refreshStats() {
-  const text = preview.textContent || '';
-  const chars = text.replace(/\s/g, '').length;
-  const imgs = preview.querySelectorAll('img').length;
-  stats.textContent = `字符 ${chars} · 图片 ${imgs} · 预览`;
-}
-
-/* ===================================================
-   Copy / Export
-   =================================================== */
-
-function wrappedPreviewHTML() {
-  return `<!-- 微信公众号排版 - 由转换工具生成 -->
+/* ========== Copy / Export ========== */
+function wrapHTML(inner) {
+  return `<!-- 微信公众号排版 - 转换工具 -->
 <section style="padding:0 10px;max-width:100%;">
-${preview.innerHTML}
+${inner}
 </section>`;
 }
 
-copyHtmlBtn.addEventListener('click', () => {
-  const html = preview.innerHTML;
-  if (!html || html.startsWith('<p style="color:#bbb')) { showToast('请先转换内容'); return; }
-  const w = wrappedPreviewHTML();
-  // try modern clipboard write
-  const blob = new Blob([w], { type: 'text/plain' });
-  navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]).then(() => {
-    showToast('HTML 已复制！粘贴到公众号编辑器即可', 1800);
-  }).catch(() => {
-    fallbackCopy(w, 'HTML 已复制！');
-  });
+$('#copyHtmlBtn').addEventListener('click', () => {
+  const h = preview.innerHTML;
+  if (!h||h.startsWith('<p style="color:#bbb')) { toast('请先转换内容'); return; }
+  const w = wrapHTML(h);
+  navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([w], {type:'text/plain'}) })]).then(() => {
+    toast('HTML 已复制，粘贴到公众号编辑器', 1600);
+  }).catch(() => fallbackCopy(w, 'HTML 已复制'));
 });
 
-copyRichBtn.addEventListener('click', () => {
-  const html = preview.innerHTML;
-  if (!html || html.startsWith('<p style="color:#bbb')) { showToast('请先转换内容'); return; }
-  const rich = `<section style="padding:0 10px;max-width:100%;">${html}</section>`;
-  const blob = new Blob([rich], { type: 'text/html' });
-  navigator.clipboard.write([new ClipboardItem({ 'text/html': blob })]).then(() => {
-    showToast('富文本已复制！可直接粘贴到公众号编辑器（推荐）', 1800);
-  }).catch(() => {
-    fallbackCopy(rich, '富文本复制失败，已复制 HTML 源码');
-  });
+$('#copyRichBtn').addEventListener('click', () => {
+  const h = preview.innerHTML;
+  if (!h||h.startsWith('<p style="color:#bbb')) { toast('请先转换内容'); return; }
+  const rich = wrapHTML(h);
+  navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([rich], {type:'text/html'}) })]).then(() => {
+    toast('富文本已复制！可直接粘贴到公众号编辑器', 1600);
+  }).catch(() => fallbackCopy(rich, '已复制 HTML'));
 });
 
 function fallbackCopy(text, msg) {
   const ta = document.createElement('textarea');
   ta.value = text;
-  ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+  ta.style.cssText = 'position:fixed;left:-9999px;top:0';
   document.body.appendChild(ta);
   ta.select();
-  try { document.execCommand('copy'); showToast(msg); }
-  catch(e) { showToast('复制失败，请手动选择复制'); }
+  try { document.execCommand('copy'); toast(msg); }
+  catch(e) { toast('复制失败，请手动选择复制'); }
   document.body.removeChild(ta);
 }
 
-exportBtn.addEventListener('click', () => {
-  const html = preview.innerHTML;
-  if (!html || html.startsWith('<p style="color:#bbb')) { showToast('请先转换内容'); return; }
-  const full = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>公众号文章</title></head>
+$('#exportBtn').addEventListener('click', () => {
+  const h = preview.innerHTML;
+  if (!h||h.startsWith('<p style="color:#bbb')) { toast('请先转换内容'); return; }
+  const full = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>公众号文章</title></head>
 <body style="font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;padding:20px;max-width:680px;margin:0 auto;color:#333;font-size:15px;line-height:1.75;">
-${html}
-</body>
-</html>`;
-  const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+${h}
+</body></html>`;
+  const blob = new Blob([full], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'wechat-article.html';
   a.click(); URL.revokeObjectURL(url);
-  showToast('已导出 wechat-article.html');
+  toast('已导出 wechat-article.html');
 });
 
-/* ===================================================
-   Event bindings
-   =================================================== */
-convertBtn.addEventListener('click', doConvert);
+/* ========== Debug toggle ========== */
+$('#debugBtn').addEventListener('click', () => {
+  debugPanel.classList.toggle('open');
+  $('#debugBtn').textContent = debugPanel.classList.contains('open') ? '🐛 关闭源码' : '🐛 HTML 源码';
+});
 
-clearBtn.addEventListener('click', () => {
+/* ========== Events ========== */
+$('#convertBtn').addEventListener('click', convert);
+$('#clearBtn').addEventListener('click', () => {
   htmlInput.value = '';
   preview.innerHTML = '<p style="color:#bbb;text-align:center;padding:60px 0;">请输入 HTML 内容后点击转换</p>';
-  stats.textContent = '';
-  previewInfo.textContent = '等待输入…';
-  imageList = [];
-  renderImageManager();
+  $('#stats').textContent = '';
+  $('#previewInfo').textContent = '等待输入…';
+  debugPanel.classList.remove('open');
+  debugPanel.textContent = '';
+  imageList = []; renderImages();
 });
 
 htmlInput.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doConvert(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); convert(); }
 });
 
-// Auto-convert with debounce
-let dcTimer;
+let acTimer;
 htmlInput.addEventListener('input', () => {
-  clearTimeout(dcTimer);
-  dcTimer = setTimeout(doConvert, 1000);
+  clearTimeout(acTimer);
+  acTimer = setTimeout(convert, 1200);
 });
 
-/* ===================================================
-   Paste rich text handler
-   =================================================== */
+/* ========== Paste rich text handler ========== */
 htmlInput.addEventListener('paste', () => {
   setTimeout(() => {
     const text = htmlInput.value;
-    if (text && !/<[a-z][\s\S]*>/i.test(text.slice(0, 200))) {
-      navigator.clipboard.read().then(items => {
-        for (const item of items) {
-          if (item.types.includes('text/html')) {
-            item.getType('text/html').then(blob => blob.text().then(richHtml => {
-              if (richHtml && richHtml.length > text.length) {
-                htmlInput.value = richHtml;
-                doConvert();
-              }
-            }));
-            break;
-          }
+    if (!text || /<[a-z][\s\S]*>/i.test(text.slice(0,200))) return;
+    navigator.clipboard.read().then(items => {
+      for (const item of items) {
+        if (item.types.includes('text/html')) {
+          item.getType('text/html').then(blob => blob.text().then(rich => {
+            if (rich && rich.length > text.length) {
+              htmlInput.value = rich;
+              convert();
+            }
+          }));
+          break;
         }
-      }).catch(() => {});
-    }
-  }, 150);
+      }
+    }).catch(() => {});
+  }, 120);
 });
 
-/* ===================================================
-   Init: load sample
-   =================================================== */
+/* ========== Init ========== */
 htmlInput.value = `<h1 style="text-align:center;">Hello 微信公众号</h1>
 <p style="text-indent:2em;">欢迎使用排版转换工具！你可以在这里粘贴 HTML 内容，然后点击转换。</p>
 <p style="text-indent:2em;">支持 <strong>加粗</strong>、<em>斜体</em>、<span style="color:#e74c3c;">彩色文字</span>、<span style="background:#ffeaa7;">高亮</span> 等样式。</p>
@@ -1233,9 +872,14 @@ htmlInput.value = `<h1 style="text-align:center;">Hello 微信公众号</h1>
 <thead><tr><th>名称</th><th>说明</th></tr></thead>
 <tbody><tr><td>功能 A</td><td>描述一</td></tr><tr><td>功能 B</td><td>描述二</td></tr></tbody>
 </table>
+<pre><code>// 代码区块示例
+function greet(name) {
+  return "Hello, " + name + "!";
+}
+console.log(greet("World"));</code></pre>
 <img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" alt="微信图标">`;
 
-setTimeout(doConvert, 400);
+setTimeout(convert, 300);
 
 })();
 </script>
