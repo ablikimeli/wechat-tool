@@ -140,7 +140,7 @@ body{
 #preview a{color:#07c160;text-decoration:underline}
 #preview hr{margin:1.2em 0;border:none;border-top:1px solid #eee}
 #preview pre{
-  background:#0d1117;color:#e6edf3;padding:16px;margin:0;
+  background:#ffffff;color:#24292f;padding:16px;margin:0;
   overflow-x:auto;font-size:13px;line-height:1.6;
   font-family:Consolas,"Courier New",monospace;white-space:pre;
   border-radius:0;
@@ -447,7 +447,7 @@ const TPL = {
 <div style="background:#f0faf4;border-radius:8px;padding:14px 18px;margin:1.5em 0;">
 <p style="font-size:14px;color:#2c6e49;line-height:1.7;margin:0;">💡 <strong>提示：</strong>这里可以放一个重要的提示信息，帮助读者避免常见的踩坑。</p>
 </div>
-<pre style="background:#0d1117;color:#e6edf3;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,'Courier New',monospace;"><code class="language-js" style="background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;">// 代码示例
+<pre style="background:#ffffff;color:#24292f;padding:16px;margin:0;border:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,'Courier New',monospace;"><code class="language-js" style="background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;border:0;">// 代码示例
 function hello() {
   const msg = "Hello World!";
   console.log(msg);
@@ -589,7 +589,7 @@ const DEFAULTS = {
   th:    'border:1px solid #ddd;padding:6px 10px;background:#f7f7f7;font-weight:600',
   td:    'border:1px solid #ddd;padding:6px 10px',
   blockquote: 'margin:.8em 0;padding:8px 14px;background:#f7f7f7;border-left:4px solid #07c160;color:#666',
-  pre:   'background:#0d1117;color:#e6edf3;padding:16px;margin:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace',
+  pre:   'background:#ffffff;color:#24292f;padding:16px;margin:0;border:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace',
   code:  'background:#f0f0f0;color:#e74c3c;padding:2px 6px;border-radius:3px;font-family:Consolas,"Courier New",monospace;font-size:13px',
   img:   'max-width:100%;height:auto;display:block;margin:.8em auto;border-radius:4px',
   hr:    'margin:1.2em 0;border:none;border-top:1px solid #eee',
@@ -852,20 +852,20 @@ function wrapCodeBlocks(doc) {
       lang = LANG_LABELS[dataLang.toLowerCase()] || dataLang;
     }
 
-    // Build wrapper
+    // Build wrapper — GitHub light style (gray background, black text)
     const wrap = doc.createElement('div');
-    wrap.setAttribute('style', 'border:1px solid #30363d;border-radius:6px;overflow:hidden;margin:.8em 0;');
+    wrap.setAttribute('style', 'border:1px solid #d0d7de;border-radius:6px;overflow:hidden;margin:.8em 0;');
 
-    // Build header
+    // Build header bar
     const hdr = doc.createElement('div');
-    hdr.setAttribute('style', 'background:#161b22;padding:6px 16px;border-bottom:1px solid #30363d;font-size:12px;color:#8b949e;font-family:Consolas,"Courier New",monospace;line-height:1.8;');
+    hdr.setAttribute('style', 'background:#f6f8fa;padding:6px 16px;border-bottom:1px solid #d0d7de;font-size:12px;color:#57606a;font-family:Consolas,"Courier New",monospace;line-height:1.8;');
     hdr.textContent = lang;
 
-    // Reset pre for GitHub dark code area
-    pre.setAttribute('style', 'background:#0d1117;color:#e6edf3;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace;');
+    // Reset pre for GitHub light code area
+    pre.setAttribute('style', 'background:#ffffff;color:#24292f;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,"Courier New",monospace;');
 
     // Reset code inside pre
-    code.setAttribute('style', 'background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;');
+    code.setAttribute('style', 'background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;border:0;');
 
     // Reparent
     pre.parentNode.replaceChild(wrap, pre);
@@ -1211,7 +1211,7 @@ htmlInput.value = `<h1 style="text-align:center;font-size:22px;color:#2c3e50;let
 <tr><td style="border:1px solid #ddd;padding:8px 12px;">功能 B</td><td style="border:1px solid #ddd;padding:8px 12px;">这是功能 B 的描述</td></tr></tbody>
 </table>
 <h2 style="font-size:18px;font-weight:700;color:#2c3e50;border-left:4px solid #07c160;padding-left:12px;margin:1.5em 0 0.8em;">代码示例</h2>
-<pre style="background:#0d1117;color:#e6edf3;padding:16px;margin:0;border:0;border-radius:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,'Courier New',monospace;"><code class="language-js" style="background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;">// 代码区块示例
+<pre style="background:#ffffff;color:#24292f;padding:16px;margin:0;border:0;overflow-x:auto;white-space:pre;font-size:13px;line-height:1.6;font-family:Consolas,'Courier New',monospace;"><code class="language-js" style="background:none;color:inherit;padding:0;margin:0;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;border:0;">// 代码区块示例
 function greet(name) {
   return "Hello, " + name + "!";
 }
