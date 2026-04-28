@@ -187,7 +187,7 @@ body{
 <body>
 <div class="header">
   <h1>微信公众号排版转换工具</h1>
-  <span class="badge">v4.0</span>
+  <span class="badge">v4.1</span>
   <p>HTML → WeChat 兼容 · 图片管理 · 一键复制 · 开源</p>
 </div>
 
@@ -653,8 +653,9 @@ function convertHTML(html) {
   return { html: out, images, stats: { chars: charCount, paragraphs: pCount, images: imgCount, readTime } };
 }
 
-/* ========== Image Manager ========== */
+/* ========== Image Manager with Upload ========== */
 let imageList = [];
+let imageReplacements = {}; // idx -> base64 data URL, survives re-convert
 const imgManager = $('#imageManager');
 const imgBadge = $('#imgBadge');
 
@@ -665,56 +666,164 @@ function renderImages() {
     return;
   }
   imgBadge.textContent = `(${imageList.length})`;
-  const tip = `<div style="background:#e8f8f0;border:1px solid #b2dfc8;border-radius:8px;padding:8px 12px;font-size:11px;color:#2c6e49;margin-bottom:8px;">
-    💡 图片无法显示？上传到图床（<a href="https://www.boltp.com/?ref=www.7udh.com" target="_blank" style="color:#07c160;">boltp.com</a>），然后编辑下方路径。
+
+  // Upload area at top
+  let cards = `<div style="background:#e8f8f0;border:1px solid #b2dfc8;border-radius:8px;padding:8px 12px;font-size:11px;color:#2c6e49;margin-bottom:8px;">
+    💡 图片无法显示？点击下方「上传」选取本地图片，自动嵌入文章中。大图片（&gt;500KB）建议先用
+    <a href="https://www.boltp.com/?ref=www.7udh.com" target="_blank" style="color:#07c160;">boltp.com</a> 压缩后再上传。
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
+    <label class="btn btn-sm" style="background:#07c160;color:#fff;cursor:pointer;display:inline-flex;gap:3px;padding:5px 12px;border-radius:5px;font-size:12px;">
+      📤 上传图片替换
+      <input type="file" id="imgUploadInput" accept="image/*" multiple style="display:none;">
+    </label>
+    <span style="font-size:10px;color:#999;">支持 jpg/png/gif/webp，自动转 base64 嵌入</span>
   </div>`;
-  let cards = tip;
+
   imageList.forEach((img, i) => {
-    const broken = img.broken || !img.currentSrc || img.currentSrc.startsWith('file://');
-    const thumb = broken ? '<span class="broken">⚠️</span>'
-      : `<img src="${img.currentSrc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}" onerror="this.parentElement.innerHTML='<span class=\\'broken\\'>⚠️</span>'" alt="">`;
+    const replaced = imageReplacements[i];
+    const currentSrc = replaced || img.currentSrc;
+    const broken = !currentSrc || currentSrc.startsWith('file://');
+    const thumb = broken
+      ? '<span class="broken">⚠️</span>'
+      : `<img src="${currentSrc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}" onerror="this.parentElement.innerHTML='<span class=\\'broken\\'>⚠️</span>'" alt="">`;
+
+    const label = replaced
+      ? '<span class="broken-tag" style="background:#07c160;color:#fff;">已嵌入</span>'
+      : (broken ? '<span class="broken-tag">需处理</span>' : '');
+
     cards += `<div class="image-card">
       <div class="thumb">${thumb}</div>
       <div class="info">
-        <div class="path">${(img.currentSrc||'(空)').slice(0,50)}${((img.currentSrc||'').length>50?'…':'')} ${broken?'<span class="broken-tag">需处理</span>':''}</div>
-        <div class="meta">${img.alt?'alt: '+img.alt.slice(0,20)+' · ':''}${img.width||img.height?img.width+'×'+img.height+' · ':''}索引 ${i+1}</div>
+        <div class="path">${(currentSrc||'(空)').slice(0,40)}${((currentSrc||'').length>40?'…':'')} ${label}</div>
+        <div class="meta">${img.alt?'alt: '+img.alt.slice(0,15)+' · ':''}${img.width||img.height?img.width+'×'+img.height+' · ':''}索引 ${i+1}${replaced ? ' · 内嵌 '+(replaced.length>>10)+'KB' : ''}</div>
       </div>
       <div class="actions">
-        <button data-idx="${i}" class="im-edit">编辑</button>
-        <button data-idx="${i}" class="im-preview" ${broken?'disabled':''}>预览</button>
+        <button data-idx="${i}" class="im-upload btn-sm" style="background:#07c160;color:#fff;border:none;border-radius:4px;cursor:pointer;padding:3px 8px;font-size:10px;">上传</button>
+        <button data-idx="${i}" class="im-edit btn-sm" style="border:1px solid #ddd;border-radius:4px;cursor:pointer;padding:3px 8px;font-size:10px;background:#fff;">编辑</button>
+        ${replaced ? `<button data-idx="${i}" class="im-revert btn-sm" style="border:1px solid #e74c3c;border-radius:4px;cursor:pointer;padding:3px 8px;font-size:10px;color:#e74c3c;background:#fff;">还原</button>` : ''}
       </div>
     </div>`;
   });
   imgManager.innerHTML = cards;
-  imgManager.querySelectorAll('.im-edit').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const i = parseInt(btn.dataset.idx);
-      showModal('编辑图片路径 #'+(i+1), imageList[i].currentSrc, (v) => {
-        if (v && v !== imageList[i].currentSrc) {
+
+  // Hidden file input for each image card
+  imageList.forEach((img, i) => {
+    const card = imgManager.querySelectorAll('.image-card')[i];
+    if (!card) return;
+
+    // Upload button
+    card.querySelector('.im-upload')?.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*';
+      input.onchange = () => {
+        if (!input.files[0]) return;
+        const file = input.files[0];
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxSize) {
+          toast(`图片过大 (${(file.size/1024/1024).toFixed(1)}MB)，建议压缩后上传`, 2500);
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          imageReplacements[i] = dataUrl;
+          // Update preview
+          const imgs = preview.querySelectorAll('img');
+          if (imgs[i]) imgs[i].setAttribute('src', dataUrl);
+          toast(`✅ 已嵌入 ${file.name} (${(dataUrl.length/1024).toFixed(0)}KB)`);
+          renderImages();
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    });
+
+    // Edit button
+    card.querySelector('.im-edit')?.addEventListener('click', () => {
+      const currentSrc = imageReplacements[i] || imageList[i].currentSrc;
+      showModal('编辑图片路径 #'+(i+1),
+        currentSrc.startsWith('data:') ? '(base64 内嵌)' : currentSrc,
+        (v) => {
+          if (!v) return;
+          delete imageReplacements[i];
           imageList[i].currentSrc = v;
           syncImages();
           toast('图片路径已更新');
-        }
+        });
+    });
+
+    // Revert button (only for replaced images)
+    card.querySelector('.im-revert')?.addEventListener('click', () => {
+      delete imageReplacements[i];
+      const origSrc = imageList[i].origSrc;
+      imageList[i].currentSrc = origSrc;
+      const imgs = preview.querySelectorAll('img');
+      if (imgs[i]) imgs[i].setAttribute('src', origSrc);
+      toast('已还原为原始路径');
+      renderImages();
+    });
+  });
+
+  // Upload multiple images at once (for the top upload button)
+  const bulkInput = document.getElementById('imgUploadInput');
+  if (bulkInput) {
+    // Remove old listener by cloning
+    const newInput = bulkInput.cloneNode(true);
+    bulkInput.parentNode.replaceChild(newInput, bulkInput);
+    newInput.addEventListener('change', () => {
+      const files = Array.from(newInput.files);
+      if (files.length === 0) return;
+      let done = 0;
+      files.forEach((file, fi) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Find first broken image and replace it
+          for (let i = 0; i < imageList.length; i++) {
+            if (!imageReplacements[i] && (!imageList[i].currentSrc || imageList[i].currentSrc.startsWith('file://'))) {
+              imageReplacements[i] = e.target.result;
+              const imgs = preview.querySelectorAll('img');
+              if (imgs[i]) imgs[i].setAttribute('src', e.target.result);
+              done++;
+              break;
+            }
+          }
+          if (fi === files.length - 1) {
+            toast(`✅ 已嵌入 ${done} 张图片`);
+            renderImages();
+          }
+        };
+        reader.readAsDataURL(file);
       });
+      newInput.value = '';
     });
-  });
-  imgManager.querySelectorAll('.im-preview').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const src = imageList[parseInt(btn.dataset.idx)].currentSrc;
-      if (src) window.open(src, '_blank');
-    });
-  });
+  }
 }
 
 function syncImages() {
-  // Re-apply image src changes to the preview DOM
   let i = 0;
   preview.querySelectorAll('img').forEach(img => {
-    if (i < imageList.length && imageList[i].currentSrc !== imageList[i].origSrc) {
+    if (imageReplacements[i]) {
+      img.setAttribute('src', imageReplacements[i]);
+    } else if (i < imageList.length && imageList[i].currentSrc !== imageList[i].origSrc) {
       img.setAttribute('src', imageList[i].currentSrc);
     }
     i++;
   });
+}
+
+/** Apply stored image replacements to the preview DOM after re-convert */
+function applyReplacements() {
+  const keys = Object.keys(imageReplacements);
+  if (keys.length === 0) return;
+  const imgs = preview.querySelectorAll('img');
+  keys.forEach(k => {
+    const idx = parseInt(k);
+    if (imgs[idx]) {
+      imgs[idx].setAttribute('src', imageReplacements[k]);
+    }
+  });
+  // Update debug panel
+  debugPanel.textContent = preview.innerHTML;
 }
 
 /* ========== Main convert function ========== */
@@ -736,6 +845,8 @@ function convert() {
     preview.innerHTML = result.html;
     debugPanel.textContent = result.html;
     imageList = result.images;
+    // Re-apply any uploaded image replacements
+    applyReplacements();
     renderImages();
 
     const s = result.stats;

@@ -4,7 +4,8 @@
       "Bash(start \"\" \"d:\\\\Claude\\\\tool\\\\wechat-editor.html\")",
       "Bash(git config *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(curl -skL -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://ablikimeli.github.io/wechat-tool/\")"
     ]
   }
 }
